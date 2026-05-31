@@ -1,135 +1,92 @@
-
-<h2 class="sr-only">AR Finger Answer ป.1 — ชูนิ้ว 1, 2, 3 เพื่อตอบคำถาม</h2>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AR Punch Quiz ภาษาอังกฤษ ป.1</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;}
-.app{font-family:'Nunito',var(--font-sans);padding:.5rem 0 1.5rem;}
+html,body{width:100%;height:100%;background:#000;font-family:'Nunito',sans-serif;overflow:hidden;}
 
-.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
-.gtitle{font-size:20px;font-weight:900;color:var(--color-text-primary);}
-.score-pill{background:#FFF3CD;color:#7B5E00;border:2px solid #F5C800;border-radius:999px;padding:6px 16px;font-size:16px;font-weight:900;}
+.shell{position:relative;width:100vw;height:100vw;max-height:100vh;max-width:calc(100vh);margin:auto;background:#0a0a1a;overflow:hidden;}
+@media(orientation:landscape){
+  .shell{width:100vh;height:56.25vw;max-width:100vw;max-height:100vh;}
+}
 
-.cat-tabs{display:flex;gap:8px;margin-bottom:.85rem;flex-wrap:wrap;}
-.cat-btn{padding:7px 16px;border-radius:999px;font-size:14px;font-weight:900;cursor:pointer;border:2.5px solid transparent;font-family:'Nunito',var(--font-sans);transition:all .15s;}
-.cat-btn.on{background:#4F46E5;color:#fff;border-color:#4F46E5;}
-.cat-btn:not(.on){background:var(--color-background-secondary);color:var(--color-text-secondary);border-color:var(--color-border-tertiary);}
+video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
+canvas#gc{position:absolute;inset:0;width:100%;height:100%;}
 
-.stage-wrap{width:100%;margin-bottom:1rem;}
-.stage{position:relative;width:100%;padding-top:100%;border-radius:20px;overflow:hidden;background:#0a0a1a;}
-.stage-inner{position:absolute;inset:0;}
-video{width:100%;height:100%;display:block;object-fit:cover;transform:scaleX(-1);}
-canvas#ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
-.ar-badge{position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(79,70,229,.9);color:#fff;font-size:12px;font-weight:900;letter-spacing:1px;padding:4px 14px;border-radius:999px;white-space:nowrap;pointer-events:none;z-index:5;}
-.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#4F46E5,transparent);animation:scan 2.5s linear infinite;opacity:.5;pointer-events:none;z-index:4;}
-@keyframes scan{0%{top:0;}100%{top:100%;}}
-.cc{position:absolute;width:22px;height:22px;border-color:#4F46E5;border-style:solid;opacity:.7;pointer-events:none;z-index:5;}
-.cc.tl{top:10px;left:10px;border-width:3px 0 0 3px;border-radius:4px 0 0 0;}
-.cc.tr{top:10px;right:10px;border-width:3px 3px 0 0;border-radius:0 4px 0 0;}
-.cc.bl{bottom:10px;left:10px;border-width:0 0 3px 3px;border-radius:0 0 0 4px;}
-.cc.br{bottom:10px;right:10px;border-width:0 3px 3px 0;border-radius:0 0 4px 0;}
+.hud-score{position:absolute;top:3%;left:3%;background:#fff;border:3px solid #F97316;border-radius:16px;padding:5px 16px;text-align:center;z-index:10;}
+.hud-score-label{font-size:12px;font-weight:900;color:#F97316;}
+.hud-score-val{font-size:26px;font-weight:900;color:#F97316;line-height:1.1;}
 
-.finger-hud{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.72);border-radius:14px;padding:7px 18px;display:flex;align-items:center;gap:10px;pointer-events:none;z-index:5;}
-.finger-big{font-size:32px;font-weight:900;color:#fff;font-family:'Nunito',sans-serif;min-width:24px;text-align:center;line-height:1;}
-.finger-sub{font-size:11px;color:#aaa;font-weight:700;text-align:center;}
-.fbar-row{display:flex;gap:4px;align-items:flex-end;height:28px;}
-.fbar{width:10px;border-radius:4px 4px 0 0;background:#4F46E5;transition:height .12s;}
+.hud-timer{position:absolute;top:3%;right:3%;background:#fff;border:3px solid #3B82F6;border-radius:16px;padding:5px 18px;text-align:center;z-index:10;}
+.hud-timer-label{font-size:12px;font-weight:900;color:#3B82F6;}
+.hud-timer-val{font-size:34px;font-weight:900;color:#2563EB;line-height:1.1;}
 
-.start-btn{display:block;width:100%;padding:14px;background:#4F46E5;color:#fff;border:none;border-radius:16px;font-size:18px;font-weight:900;cursor:pointer;font-family:'Nunito',var(--font-sans);margin-bottom:1rem;letter-spacing:.5px;}
-.start-btn:hover{background:#3730A3;}
+.hud-bottom{position:absolute;bottom:3%;left:3%;right:3%;z-index:10;}
+.instruction-box{background:rgba(255,255,255,.95);border:3px solid #22C55E;border-radius:18px;padding:10px 16px;display:flex;align-items:center;gap:12px;}
+.instr-icon{font-size:30px;flex-shrink:0;}
+.instr-sub{font-size:11px;font-weight:900;color:#22C55E;letter-spacing:.5px;}
+.instr-main{font-size:16px;font-weight:900;color:#1a1a1a;line-height:1.25;}
 
-.q-bar{background:var(--color-background-primary);border:3px solid #4F46E5;border-radius:18px;padding:1rem 1.25rem;margin-bottom:.85rem;display:flex;align-items:center;gap:14px;}
-.q-emoji{font-size:52px;line-height:1;}
-.q-info{flex:1;}
-.q-label{font-size:12px;font-weight:900;color:#4F46E5;letter-spacing:1px;margin-bottom:2px;}
-.q-word{font-size:36px;font-weight:900;color:var(--color-text-primary);letter-spacing:2px;line-height:1.1;}
-.q-hint{font-size:14px;color:var(--color-text-secondary);margin-top:3px;}
+.start-overlay{position:absolute;inset:0;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:30;padding:20px;}
+.start-title{font-size:28px;font-weight:900;color:#fff;text-align:center;line-height:1.3;}
+.start-sub{font-size:15px;color:#ccc;text-align:center;}
+.start-btn{padding:15px 36px;background:#4F46E5;color:#fff;border:none;border-radius:18px;font-size:20px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;margin-top:4px;}
+.cat-grid{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.cat-s{padding:9px 18px;border-radius:999px;font-size:14px;font-weight:900;cursor:pointer;border:2.5px solid rgba(255,255,255,.3);font-family:'Nunito',sans-serif;background:rgba(255,255,255,.12);color:#fff;}
+.cat-s.on{background:#4F46E5;border-color:#4F46E5;}
 
-.hint-bar{text-align:center;font-size:15px;color:var(--color-text-secondary);margin-bottom:.85rem;font-weight:700;}
-.hint-bar strong{color:#4F46E5;font-size:17px;}
-
-.choices-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:.85rem;}
-.choice-t{background:var(--color-background-secondary);border:3px solid var(--color-border-secondary);border-radius:16px;padding:14px 8px 12px;text-align:center;transition:all .2s;}
-.choice-num{font-size:36px;font-weight:900;color:#4F46E5;font-family:'Nunito',var(--font-sans);display:block;line-height:1;}
-.choice-finger{font-size:26px;display:block;margin:3px 0;}
-.choice-text{font-size:15px;font-weight:900;color:var(--color-text-primary);display:block;margin-top:3px;line-height:1.2;}
-.choice-t.highlight{border-color:#F59E0B;background:#FFFBEB;}
-.choice-t.counting{border-color:#4F46E5;background:#EDE9FE;animation:pulse .4s ease infinite alternate;}
-@keyframes pulse{0%{transform:scale(1);}100%{transform:scale(1.05);}}
-.choice-t.correct-t{border-color:#22C55E;background:#DCFCE7;animation:pop .35s ease;}
-.choice-t.wrong-t{border-color:#EF4444;background:#FEE2E2;animation:shake .3s ease;}
-@keyframes pop{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
-@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
-
-.feedback{text-align:center;min-height:28px;font-size:18px;font-weight:900;margin-bottom:.75rem;}
-.fb-ok{color:#15803D;}
-.fb-no{color:#B91C1C;}
-
-.next-btn{display:none;width:100%;padding:14px;background:#4F46E5;color:#fff;border:none;border-radius:16px;font-size:18px;font-weight:900;cursor:pointer;font-family:'Nunito',var(--font-sans);}
-.next-btn:hover{background:#3730A3;}
-.next-btn.show{display:block;}
-
-.prog-row{display:flex;align-items:center;gap:10px;margin-top:.85rem;}
-.prog-lbl{font-size:13px;color:var(--color-text-secondary);white-space:nowrap;font-weight:700;}
-.prog-bg{flex:1;height:10px;background:var(--color-background-secondary);border-radius:99px;overflow:hidden;}
-.prog-fg{height:100%;background:#4F46E5;border-radius:99px;transition:width .4s;}
+.result-overlay{position:absolute;inset:0;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:30;}
+.result-overlay.show{display:flex;}
+.result-title{font-size:36px;font-weight:900;color:#fff;}
+.result-score{font-size:72px;font-weight:900;color:#FCD34D;}
+.result-btn{padding:14px 32px;background:#22C55E;color:#fff;border:none;border-radius:16px;font-size:19px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;}
 </style>
+</head>
+<body>
+<div class="shell" id="shell">
+  <video id="vid" autoplay playsinline muted></video>
+  <canvas id="gc"></canvas>
 
-<div class="app">
-  <div class="topbar">
-    <div class="gtitle">&#9995; AR Finger Answer</div>
-    <div class="score-pill">&#11088; <span id="score">0</span></div>
+  <div class="hud-score">
+    <div class="hud-score-label">คะแนน</div>
+    <div class="hud-score-val" id="scoreVal">0</div>
+  </div>
+  <div class="hud-timer">
+    <div class="hud-timer-label">เวลา</div>
+    <div class="hud-timer-val" id="timerVal">40</div>
   </div>
 
-  <div class="cat-tabs">
-    <button class="cat-btn on" onclick="switchCat('animals',this)">&#128062; Animals</button>
-    <button class="cat-btn" onclick="switchCat('colors',this)">&#127912; Colors</button>
-    <button class="cat-btn" onclick="switchCat('food',this)">&#127822; Food</button>
-    <button class="cat-btn" onclick="switchCat('numbers',this)">&#128290; Numbers</button>
-  </div>
-
-  <div class="stage-wrap">
-    <button class="start-btn" id="startBtn" onclick="startCam()">&#128247; เปิดกล้อง AR เพื่อเริ่มเล่น!</button>
-    <div class="stage" id="stage" style="display:none;">
-      <div class="stage-inner">
-        <video id="vid" autoplay playsinline muted></video>
-        <canvas id="ov"></canvas>
-        <div class="ar-badge">&#127909; AR LIVE — ชูนิ้ว 1, 2, หรือ 3</div>
-        <div class="scan-line"></div>
-        <div class="cc tl"></div><div class="cc tr"></div>
-        <div class="cc bl"></div><div class="cc br"></div>
-        <div class="finger-hud" id="fingerHud">
-          <div>
-            <div class="finger-big" id="fingerNum">—</div>
-            <div class="finger-sub">นิ้ว</div>
-          </div>
-          <div class="fbar-row">
-            <div class="fbar" id="fb1" style="height:4px;"></div>
-            <div class="fbar" id="fb2" style="height:4px;"></div>
-            <div class="fbar" id="fb3" style="height:4px;"></div>
-          </div>
-        </div>
+  <div class="hud-bottom">
+    <div class="instruction-box">
+      <div class="instr-icon">🐶</div>
+      <div>
+        <div class="instr-sub" id="instrSub">เอามือไปชนวงกลม!</div>
+        <div class="instr-main" id="instrMain">เลือกคำแปลที่ถูกต้อง</div>
       </div>
     </div>
   </div>
 
-  <div class="q-bar">
-    <div class="q-emoji" id="qEmoji">&#128049;</div>
-    <div class="q-info">
-      <div class="q-label">&#128270; คำถาม</div>
-      <div class="q-word" id="qWord">CAT</div>
-      <div class="q-hint">แปลว่าอะไร?</div>
+  <div class="start-overlay" id="startOverlay">
+    <div class="start-title">🎮 AR Punch Quiz<br>ภาษาอังกฤษ ป.1</div>
+    <div class="start-sub">เลือกหมวดคำศัพท์ที่ต้องการเรียน</div>
+    <div class="cat-grid">
+      <button class="cat-s on" onclick="selCat('animals',this)">🐾 Animals</button>
+      <button class="cat-s" onclick="selCat('colors',this)">🎨 Colors</button>
+      <button class="cat-s" onclick="selCat('food',this)">🍎 Food</button>
+      <button class="cat-s" onclick="selCat('numbers',this)">🔢 Numbers</button>
     </div>
+    <button class="start-btn" onclick="startGame()">📷 เปิดกล้องเริ่มเล่น!</button>
   </div>
 
-  <div class="hint-bar">&#9995; ชูนิ้ว <strong>1</strong>, <strong>2</strong>, หรือ <strong>3</strong> ค้างไว้สักครู่!</div>
-
-  <div class="choices-row" id="choicesRow"></div>
-  <div class="feedback" id="feedback"></div>
-  <button class="next-btn" id="nextBtn" onclick="nextQ()">&#9654;&#65039; คำถามถัดไป</button>
-
-  <div class="prog-row">
-    <span class="prog-lbl" id="progLbl">0 / 0</span>
-    <div class="prog-bg"><div class="prog-fg" id="progFg" style="width:0%"></div></div>
+  <div class="result-overlay" id="resultOverlay">
+    <div class="result-title">🎉 จบเกม!</div>
+    <div style="color:#fff;font-size:20px;font-weight:800;">คะแนนของคุณ</div>
+    <div class="result-score" id="finalScore">0</div>
+    <button class="result-btn" onclick="restartGame()">🔄 เล่นใหม่</button>
   </div>
 </div>
 
@@ -143,6 +100,8 @@ const DB={
     {word:'FISH',thai:'ปลา',emoji:'🐟'},
     {word:'COW',thai:'วัว',emoji:'🐄'},
     {word:'PIG',thai:'หมู',emoji:'🐷'},
+    {word:'RABBIT',thai:'กระต่าย',emoji:'🐰'},
+    {word:'DUCK',thai:'เป็ด',emoji:'🦆'},
   ],
   colors:[
     {word:'RED',thai:'สีแดง',emoji:'🔴'},
@@ -151,6 +110,8 @@ const DB={
     {word:'YELLOW',thai:'สีเหลือง',emoji:'🟡'},
     {word:'PINK',thai:'สีชมพู',emoji:'🩷'},
     {word:'WHITE',thai:'สีขาว',emoji:'⚪'},
+    {word:'BLACK',thai:'สีดำ',emoji:'⚫'},
+    {word:'ORANGE',thai:'สีส้ม',emoji:'🟠'},
   ],
   food:[
     {word:'APPLE',thai:'แอปเปิ้ล',emoji:'🍎'},
@@ -159,6 +120,8 @@ const DB={
     {word:'MILK',thai:'นม',emoji:'🥛'},
     {word:'EGG',thai:'ไข่',emoji:'🥚'},
     {word:'CAKE',thai:'เค้ก',emoji:'🎂'},
+    {word:'BREAD',thai:'ขนมปัง',emoji:'🍞'},
+    {word:'WATER',thai:'น้ำ',emoji:'💧'},
   ],
   numbers:[
     {word:'ONE',thai:'หนึ่ง',emoji:'1️⃣'},
@@ -167,86 +130,115 @@ const DB={
     {word:'FOUR',thai:'สี่',emoji:'4️⃣'},
     {word:'FIVE',thai:'ห้า',emoji:'5️⃣'},
     {word:'SIX',thai:'หก',emoji:'6️⃣'},
+    {word:'SEVEN',thai:'เจ็ด',emoji:'7️⃣'},
+    {word:'EIGHT',thai:'แปด',emoji:'8️⃣'},
   ],
 };
 
-let cat='animals',score=0,queue=[],qIdx=0,answered=false,done=0;
-let curN=0,holdF=0,HOLD=22,lastConfirm=0;
-let choices=[];
+const TOTAL_TIME=40;
+let cat='animals',score=0,timeLeft=TOTAL_TIME,timerID=null;
+let queue=[],qIdx=0,answered=false;
+let choices=[],qObj=null,bubbles=[];
+let handPts=[];
+let punchCD=0,gameRunning=false;
 
 const vid=document.getElementById('vid');
-const ov=document.getElementById('ov');
-const octx=ov.getContext('2d');
+const gc=document.getElementById('gc');
+const ctx=gc.getContext('2d');
 
-function switchCat(c,btn){
+function sizeCanvas(){
+  const sh=document.getElementById('shell');
+  gc.width=sh.offsetWidth;
+  gc.height=sh.offsetHeight;
+}
+
+function selCat(c,btn){
   cat=c;
-  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll('.cat-s').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  resetGame();
 }
 
-function resetGame(){
-  queue=[...DB[cat]].sort(()=>Math.random()-.5);
-  qIdx=0;done=0;answered=false;holdF=0;curN=0;
-  document.getElementById('feedback').textContent='';
-  document.getElementById('nextBtn').classList.remove('show');
-  updateProg();
-  renderQ();
-}
-
-function renderQ(){
-  if(qIdx>=queue.length){
-    document.getElementById('feedback').innerHTML='<span class="fb-ok">🎉 เก่งมาก! หมดทุกคำแล้ว!</span>';
-    document.getElementById('qWord').textContent='';
-    document.getElementById('qEmoji').textContent='🎉';
-    document.getElementById('choicesRow').innerHTML='';
-    return;
-  }
-  answered=false;holdF=0;
-  document.getElementById('nextBtn').classList.remove('show');
-  document.getElementById('feedback').textContent='';
-  const q=queue[qIdx];
-  document.getElementById('qEmoji').innerHTML=q.emoji;
-  document.getElementById('qWord').textContent=q.word;
-
-  const allThai=DB[cat].map(x=>x.thai);
-  const wrong=allThai.filter(t=>t!==q.thai).sort(()=>Math.random()-.5).slice(0,2);
-  choices=[q.thai,...wrong].sort(()=>Math.random()-.5);
-
-  const fingers=['☝️','✌️','🤟'];
-  document.getElementById('choicesRow').innerHTML=choices.map((c,i)=>`
-    <div class="choice-t" id="ch${i+1}">
-      <span class="choice-num">${i+1}</span>
-      <span class="choice-finger">${fingers[i]}</span>
-      <span class="choice-text">${c}</span>
-    </div>
-  `).join('');
-}
-
-function updateProg(){
-  const t=queue.length,pct=t>0?Math.round((done/t)*100):0;
-  document.getElementById('progFg').style.width=pct+'%';
-  document.getElementById('progLbl').textContent=done+' / '+t;
-}
-
-async function startCam(){
-  document.getElementById('startBtn').style.display='none';
-  document.getElementById('stage').style.display='block';
+async function startGame(){
+  document.getElementById('startOverlay').style.display='none';
   try{
     const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
     vid.srcObject=stream;
-    await new Promise(r=>{vid.onloadedmetadata=r;});
+    await new Promise(r=>vid.onloadedmetadata=r);
     vid.play();
-    ov.width=vid.videoWidth||480;
-    ov.height=vid.videoHeight||480;
+    sizeCanvas();
+    window.addEventListener('resize',sizeCanvas);
     initHands();
-  }catch(e){fallbackMode();}
+    score=0;document.getElementById('scoreVal').textContent=0;
+    queue=[...DB[cat]].sort(()=>Math.random()-.5);
+    qIdx=0;
+    nextQuestion();
+    startTimer();
+    gameRunning=true;
+  }catch(e){
+    alert('ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้กล้องก่อนครับ');
+    document.getElementById('startOverlay').style.display='flex';
+  }
+}
+
+function nextQuestion(){
+  if(qIdx>=queue.length) qIdx=0;
+  answered=false;
+  qObj=queue[qIdx];
+  const all=DB[cat].map(x=>x.thai);
+  const wrong=all.filter(t=>t!==qObj.thai).sort(()=>Math.random()-.5).slice(0,2);
+  choices=[qObj.thai,...wrong].sort(()=>Math.random()-.5);
+  document.getElementById('instrSub').textContent='คำถาม '+(qIdx+1)+' / '+queue.length;
+  document.getElementById('instrMain').textContent='เอามือชน! "'+qObj.word+'" แปลว่าอะไร?';
+  buildBubbles();
+}
+
+function buildBubbles(){
+  const W=gc.width,H=gc.height;
+  const pos=[
+    {x:0.20,y:0.60},
+    {x:0.50,y:0.60},
+    {x:0.80,y:0.60},
+  ];
+  const r=Math.min(W,H)*0.10;
+  bubbles=choices.map((c,i)=>({
+    x:pos[i].x*W, y:pos[i].y*H, r,
+    text:c, correct:c===qObj.thai,
+    state:'idle', stateTimer:0,
+  }));
+}
+
+function startTimer(){
+  timeLeft=TOTAL_TIME;
+  document.getElementById('timerVal').textContent=timeLeft;
+  if(timerID) clearInterval(timerID);
+  timerID=setInterval(()=>{
+    timeLeft--;
+    document.getElementById('timerVal').textContent=timeLeft;
+    if(timeLeft<=10) document.getElementById('timerVal').style.color='#EF4444';
+    if(timeLeft<=0){clearInterval(timerID);endGame();}
+  },1000);
+}
+
+function endGame(){
+  gameRunning=false;
+  document.getElementById('finalScore').textContent=score;
+  document.getElementById('resultOverlay').classList.add('show');
+}
+
+function restartGame(){
+  document.getElementById('resultOverlay').classList.remove('show');
+  document.getElementById('timerVal').style.color='#2563EB';
+  score=0;document.getElementById('scoreVal').textContent=0;
+  document.getElementById('startOverlay').style.display='flex';
+  if(timerID) clearInterval(timerID);
+  gameRunning=false;handPts=[];
+  ctx.clearRect(0,0,gc.width,gc.height);
 }
 
 function initHands(){
-  if(typeof Hands==='undefined'){fallbackMode();return;}
+  if(typeof Hands==='undefined') return;
   const hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${f}`});
-  hands.setOptions({maxNumHands:1,modelComplexity:0,minDetectionConfidence:0.55,minTrackingConfidence:0.5});
+  hands.setOptions({maxNumHands:2,modelComplexity:0,minDetectionConfidence:0.55,minTrackingConfidence:0.5});
   hands.onResults(onResults);
   (async function loop(){
     if(vid.readyState>=2) await hands.send({image:vid});
@@ -254,144 +246,162 @@ function initHands(){
   })();
 }
 
-function countFingers(lm){
-  let c=0;
-  const tips=[8,12,16,20],mids=[6,10,14,18];
-  for(let i=0;i<4;i++) if(lm[tips[i]].y<lm[mids[i]].y) c++;
-  if(lm[4].x>lm[3].x) c++;
-  return Math.min(c,5);
-}
-
 function onResults(res){
-  octx.clearRect(0,0,ov.width,ov.height);
-  if(!res.multiHandLandmarks||!res.multiHandLandmarks.length){
-    curN=0;holdF=0;updateHUD(0,0);highlightChoice(0);return;
-  }
-  const lm=res.multiHandLandmarks[0];
-  const raw=countFingers(lm);
-  const n=(raw>=1&&raw<=3)?raw:0;
-  drawHand(lm,n);
-  if(n===curN&&n>0) holdF++;
-  else{curN=n;holdF=n>0?1:0;}
-  const pct=n>0?Math.min(holdF/HOLD,1):0;
-  updateHUD(n,pct);
-  highlightChoice(n);
-  drawArc(lm,pct,n);
-  if(!answered&&n>0&&holdF>=HOLD){
-    const now=Date.now();
-    if(now-lastConfirm>1200){lastConfirm=now;resolveAnswer(n);}
-  }
-}
-
-function drawHand(lm,n){
-  const W=ov.width,H=ov.height;
-  const pairs=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
-  octx.save();
-  octx.strokeStyle=n>0?'#6366F1':'#666';
-  octx.lineWidth=2.5;
-  pairs.forEach(([a,b])=>{
-    octx.beginPath();
-    octx.moveTo((1-lm[a].x)*W,lm[a].y*H);
-    octx.lineTo((1-lm[b].x)*W,lm[b].y*H);
-    octx.stroke();
-  });
-  lm.forEach((p,i)=>{
-    const tip=[4,8,12,16,20].includes(i);
-    octx.beginPath();
-    octx.arc((1-p.x)*W,p.y*H,tip?6:3.5,0,Math.PI*2);
-    octx.fillStyle=tip?(n>0?'#818CF8':'#999'):'#fff';
-    octx.fill();
-  });
-  octx.restore();
-}
-
-function drawArc(lm,pct,n){
-  if(!n||!pct) return;
-  const W=ov.width,H=ov.height;
-  const cx=(1-lm[9].x)*W,cy=lm[9].y*H,r=36;
-  octx.save();
-  octx.beginPath();
-  octx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+Math.PI*2*pct);
-  octx.strokeStyle=pct>=1?'#22C55E':'#F59E0B';
-  octx.lineWidth=5;octx.lineCap='round';octx.stroke();
-  if(pct>=1){
-    octx.font='bold 16px Nunito,sans-serif';
-    octx.fillStyle='#22C55E';octx.textAlign='center';octx.textBaseline='middle';
-    octx.fillText('✓',cx,cy);
-  }
-  octx.restore();
-}
-
-function updateHUD(n,pct){
-  document.getElementById('fingerNum').textContent=n>0?n:'—';
-  for(let i=1;i<=3;i++){
-    const b=document.getElementById('fb'+i);
-    const h=n>=i?Math.round(4+pct*22):4;
-    b.style.height=h+'px';
-    b.style.background=pct>=1?'#22C55E':(n>=i?'#4F46E5':'#444');
-  }
-}
-
-function highlightChoice(n){
-  for(let i=1;i<=3;i++){
-    const el=document.getElementById('ch'+i);
-    if(!el) continue;
-    el.classList.remove('highlight','counting');
-    if(i===n) el.classList.add(holdF>5?'counting':'highlight');
-  }
-}
-
-function resolveAnswer(n){
-  if(answered||qIdx>=queue.length) return;
-  answered=true;holdF=0;
-  const sel=choices[n-1],correct=queue[qIdx].thai;
-  const el=document.getElementById('ch'+n);
-  if(sel===correct){
-    if(el)el.classList.add('correct-t');
-    document.getElementById('feedback').innerHTML='<span class="fb-ok">🎉 ถูกต้อง! เก่งมากเลย!</span>';
-    score+=10;document.getElementById('score').textContent=score;
-    done++;speak(queue[qIdx].word);updateProg();
-    setTimeout(()=>document.getElementById('nextBtn').classList.add('show'),700);
-  }else{
-    if(el)el.classList.add('wrong-t');
-    const ci=choices.indexOf(correct)+1;
-    document.getElementById('feedback').innerHTML='<span class="fb-no">❌ ลองใหม่นะ! คำตอบคือ ข้อ '+ci+' — '+correct+'</span>';
-    setTimeout(()=>{
-      if(el)el.classList.remove('wrong-t');
-      answered=false;holdF=0;
-    },1100);
-  }
-}
-
-function nextQ(){
-  qIdx++;
-  for(let i=1;i<=3;i++){const e=document.getElementById('ch'+i);if(e)e.className='choice-t';}
-  document.getElementById('feedback').textContent='';
-  document.getElementById('nextBtn').classList.remove('show');
-  holdF=0;curN=0;renderQ();
-}
-
-function fallbackMode(){
-  document.getElementById('stage').style.display='none';
-  document.getElementById('startBtn').style.display='none';
-  document.getElementById('feedback').innerHTML='<span style="color:#F59E0B;font-size:14px;">⚠️ ไม่พบกล้อง — แตะตัวเลขเพื่อตอบได้เลย</span>';
-  setTimeout(()=>{
-    document.querySelectorAll('.choice-t').forEach((el,i)=>{
-      el.style.cursor='pointer';
-      el.onclick=()=>{if(!answered)resolveAnswer(i+1);};
+  handPts=[];
+  if(res.multiHandLandmarks){
+    res.multiHandLandmarks.forEach(lm=>{
+      // collect fingertips + palm center
+      const tips=[4,8,12,16,20];
+      tips.forEach(i=>{
+        handPts.push({x:(1-lm[i].x)*gc.width, y:lm[i].y*gc.height, lm, isTip:true});
+      });
+      const palm=lm[0];
+      handPts.push({x:(1-palm.x)*gc.width, y:palm.y*gc.height, lm, isTip:false});
     });
-  },300);
-  document.addEventListener('keydown',e=>{
-    if(['1','2','3'].includes(e.key))resolveAnswer(parseInt(e.key));
+  }
+  drawFrame();
+  if(gameRunning) checkCollision();
+}
+
+function drawFrame(){
+  ctx.clearRect(0,0,gc.width,gc.height);
+  drawQBubble();
+  bubbles.forEach(b=>{
+    if(b.stateTimer>0) b.stateTimer--;
+    if(b.stateTimer===0&&b.state!=='idle') b.state='idle';
+    drawChoiceBubble(b);
+  });
+  drawHands();
+}
+
+function drawQBubble(){
+  if(!qObj) return;
+  const W=gc.width,H=gc.height;
+  const cx=W*0.5, cy=H*0.22;
+  const r=Math.min(W,H)*0.13;
+
+  // dashed circle
+  ctx.save();
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.90)';ctx.fill();
+  ctx.setLineDash([10,7]);
+  ctx.strokeStyle='#22C55E';ctx.lineWidth=4;ctx.stroke();
+  ctx.setLineDash([]);
+
+  // emoji
+  const efs=Math.round(r*1.0);
+  ctx.font=`${efs}px serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(qObj.emoji,cx,cy-r*0.14);
+
+  // word
+  ctx.font=`900 ${Math.round(r*0.38)}px Nunito,sans-serif`;
+  ctx.fillStyle='#4F46E5';
+  ctx.fillText(qObj.word,cx,cy+r*0.52);
+  ctx.restore();
+}
+
+function drawChoiceBubble(b){
+  const {x,y,r,text,correct,state}=b;
+  ctx.save();
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+
+  let fill='rgba(255,255,255,0.88)';
+  let stroke='rgba(255,255,255,0.5)';
+  let textColor='#1a1a1a';
+  if(state==='correct'){fill='rgba(34,197,94,0.92)';stroke='#16A34A';textColor='#fff';}
+  else if(state==='wrong'){fill='rgba(239,68,68,0.88)';stroke='#DC2626';textColor='#fff';}
+
+  ctx.fillStyle=fill;ctx.fill();
+  ctx.strokeStyle=stroke;ctx.lineWidth=3;ctx.stroke();
+
+  // text — wrap if long
+  const fs=Math.round(r*0.42);
+  ctx.font=`900 ${fs}px Nunito,sans-serif`;
+  ctx.fillStyle=textColor;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+
+  if(text.length<=4){
+    ctx.fillText(text,x,y);
+  } else if(text.length<=6){
+    ctx.fillText(text,x,y);
+  } else {
+    const half=Math.ceil(text.length/2);
+    ctx.font=`900 ${Math.round(r*0.36)}px Nunito,sans-serif`;
+    ctx.fillText(text.slice(0,half),x,y-r*0.22);
+    ctx.fillText(text.slice(half),x,y+r*0.26);
+  }
+
+  // state icon
+  if(state==='correct'){
+    ctx.font=`900 ${Math.round(r*0.55)}px serif`;
+    ctx.fillText('✓',x,y-r*0.6);
+  } else if(state==='wrong'){
+    ctx.font=`900 ${Math.round(r*0.5)}px serif`;
+    ctx.fillText('✗',x,y-r*0.6);
+  }
+  ctx.restore();
+}
+
+function drawHands(){
+  // unique lm sets
+  const seen=new Set();
+  handPts.forEach(hp=>{
+    if(seen.has(hp.lm)) return;
+    seen.add(hp.lm);
+    const lm=hp.lm;
+    const W=gc.width,H=gc.height;
+    const pairs=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+    ctx.save();
+    ctx.strokeStyle='rgba(99,102,241,0.75)';ctx.lineWidth=2.5;
+    pairs.forEach(([a,b])=>{
+      ctx.beginPath();
+      ctx.moveTo((1-lm[a].x)*W,lm[a].y*H);
+      ctx.lineTo((1-lm[b].x)*W,lm[b].y*H);
+      ctx.stroke();
+    });
+    [4,8,12,16,20].forEach(i=>{
+      ctx.beginPath();
+      ctx.arc((1-lm[i].x)*W,lm[i].y*H,9,0,Math.PI*2);
+      ctx.fillStyle='rgba(124,58,237,0.85)';ctx.fill();
+    });
+    ctx.restore();
+  });
+}
+
+function checkCollision(){
+  if(answered||!qObj) return;
+  if(punchCD>0){punchCD--;return;}
+  handPts.forEach(hp=>{
+    bubbles.forEach(b=>{
+      if(b.state==='correct') return;
+      const dx=hp.x-b.x,dy=hp.y-b.y;
+      if(Math.sqrt(dx*dx+dy*dy)<b.r+14){
+        punchCD=20;
+        if(b.correct){
+          b.state='correct';b.stateTimer=40;
+          answered=true;
+          score+=10;document.getElementById('scoreVal').textContent=score;
+          speak(qObj.word);
+          document.getElementById('instrMain').textContent='🎉 ถูกต้อง! +10 คะแนน!';
+          setTimeout(()=>{qIdx++;nextQuestion();},850);
+        } else {
+          b.state='wrong';b.stateTimer=18;
+          document.getElementById('instrMain').textContent='❌ ผิด! ลองใหม่นะ!';
+        }
+      }
+    });
   });
 }
 
 function speak(w){
   if('speechSynthesis' in window){
     const u=new SpeechSynthesisUtterance(w);
-    u.lang='en-US';u.rate=0.75;speechSynthesis.speak(u);
+    u.lang='en-US';u.rate=0.78;speechSynthesis.speak(u);
   }
 }
 
-resetGame();
+window.addEventListener('load',sizeCanvas);
 </script>
+</body>
+</html>
