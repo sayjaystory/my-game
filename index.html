@@ -1,0 +1,436 @@
+
+<h2 class="sr-only">AR Finger Count — ชูนิ้ว 1, 2, หรือ 3 เพื่อตอบคำถามภาษาอังกฤษ</h2>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;}
+.app{font-family:'Nunito',var(--font-sans);padding:.5rem 0 1.5rem;}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;}
+.gtitle{font-size:17px;font-weight:900;color:var(--color-text-primary);}
+.score-pill{background:#FFF3CD;color:#7B5E00;border:1.5px solid #F5C800;border-radius:999px;padding:4px 13px;font-size:13px;font-weight:800;}
+.cat-tabs{display:flex;gap:7px;margin-bottom:.75rem;flex-wrap:wrap;}
+.cat-btn{padding:4px 13px;border-radius:999px;font-size:12px;font-weight:800;cursor:pointer;border:2px solid transparent;font-family:'Nunito',var(--font-sans);transition:all .15s;}
+.cat-btn.on{background:#4F46E5;color:#fff;border-color:#4F46E5;}
+.cat-btn:not(.on){background:var(--color-background-secondary);color:var(--color-text-secondary);border-color:var(--color-border-tertiary);}
+
+.stage{position:relative;width:100%;border-radius:16px;overflow:hidden;background:#0a0a1a;margin-bottom:.85rem;}
+video{width:100%;display:block;height:190px;object-fit:cover;transform:scaleX(-1);}
+canvas#ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+.ar-badge{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(79,70,229,.88);color:#fff;font-size:10px;font-weight:900;letter-spacing:1px;padding:2px 10px;border-radius:999px;white-space:nowrap;pointer-events:none;}
+.scan-line{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,#4F46E5,transparent);animation:scan 2s linear infinite;opacity:.5;pointer-events:none;}
+@keyframes scan{0%{top:0;}100%{top:100%;}}
+.cc{position:absolute;width:16px;height:16px;border-color:#4F46E5;border-style:solid;opacity:.6;pointer-events:none;}
+.cc.tl{top:7px;left:7px;border-width:2px 0 0 2px;border-radius:3px 0 0 0;}
+.cc.tr{top:7px;right:7px;border-width:2px 2px 0 0;border-radius:0 3px 0 0;}
+.cc.bl{bottom:7px;left:7px;border-width:0 0 2px 2px;border-radius:0 0 0 3px;}
+.cc.br{bottom:7px;right:7px;border-width:0 2px 2px 0;border-radius:0 0 3px 0;}
+
+.finger-display{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);border-radius:12px;padding:5px 16px;display:flex;align-items:center;gap:8px;pointer-events:none;}
+.finger-num{font-size:22px;font-weight:900;color:#fff;font-family:'Nunito',sans-serif;min-width:18px;text-align:center;}
+.finger-label{font-size:10px;color:#aaa;font-weight:700;}
+.finger-bar{display:flex;gap:3px;align-items:flex-end;}
+.fbar{width:8px;border-radius:3px 3px 0 0;background:#4F46E5;transition:height .15s;}
+
+.start-btn{display:block;width:100%;padding:11px;background:#4F46E5;color:#fff;border:none;border-radius:13px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Nunito',var(--font-sans);margin-bottom:.85rem;}
+.start-btn:hover{background:#3730A3;}
+
+.q-bar{background:var(--color-background-primary);border:2px solid #4F46E5;border-radius:14px;padding:.75rem 1rem;margin-bottom:.75rem;display:flex;align-items:center;gap:12px;}
+.q-emoji{font-size:38px;line-height:1;}
+.q-info{flex:1;}
+.q-label{font-size:10px;font-weight:800;color:#4F46E5;letter-spacing:1px;}
+.q-word{font-size:26px;font-weight:900;color:var(--color-text-primary);letter-spacing:1.5px;}
+.q-hint{font-size:11px;color:var(--color-text-secondary);}
+
+.hint-bar{text-align:center;font-size:12px;color:var(--color-text-secondary);margin-bottom:.6rem;}
+.hint-bar strong{color:#4F46E5;}
+
+.choices-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:.75rem;}
+.choice-t{background:var(--color-background-secondary);border:2.5px solid var(--color-border-secondary);border-radius:13px;padding:10px 8px 10px;text-align:center;transition:all .2s;position:relative;overflow:hidden;}
+.choice-num{font-size:28px;font-weight:900;color:#4F46E5;font-family:'Nunito',var(--font-sans);display:block;line-height:1;}
+.choice-finger{font-size:20px;display:block;margin:2px 0;}
+.choice-text{font-size:13px;font-weight:800;color:var(--color-text-primary);display:block;}
+.choice-t.highlight{border-color:#F59E0B;background:#FFFBEB;}
+.choice-t.counting{border-color:#4F46E5;background:#EDE9FE;animation:pulse .4s ease infinite alternate;}
+@keyframes pulse{0%{transform:scale(1);}100%{transform:scale(1.04);}}
+.choice-t.correct-t{border-color:#22C55E;background:#DCFCE7;animation:pop .35s ease;}
+.choice-t.wrong-t{border-color:#EF4444;background:#FEE2E2;animation:shake .3s ease;}
+@keyframes pop{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+@keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+.choice-num-highlight{color:#F59E0B;}
+
+.progress-ring{position:absolute;top:6px;right:6px;}
+
+.feedback{text-align:center;min-height:24px;font-size:14px;font-weight:800;margin-bottom:.6rem;}
+.fb-ok{color:#15803D;}
+.fb-no{color:#B91C1C;}
+
+.next-btn{display:none;width:100%;padding:10px;background:#4F46E5;color:#fff;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:'Nunito',var(--font-sans);}
+.next-btn:hover{background:#3730A3;}
+.next-btn.show{display:block;}
+
+.prog-row{display:flex;align-items:center;gap:8px;margin-top:.75rem;}
+.prog-lbl{font-size:11px;color:var(--color-text-secondary);white-space:nowrap;}
+.prog-bg{flex:1;height:6px;background:var(--color-background-secondary);border-radius:99px;overflow:hidden;}
+.prog-fg{height:100%;background:#4F46E5;border-radius:99px;transition:width .4s;}
+
+.countdown-ring{transition:stroke-dashoffset .1s linear;}
+</style>
+
+<div class="app">
+  <div class="topbar">
+    <div class="gtitle">&#9995; AR Finger Answer</div>
+    <div class="score-pill">&#11088; <span id="score">0</span> pts</div>
+  </div>
+
+  <div class="cat-tabs">
+    <button class="cat-btn on" onclick="switchCat('animals',this)">&#128062; Animals</button>
+    <button class="cat-btn" onclick="switchCat('colors',this)">&#127912; Colors</button>
+    <button class="cat-btn" onclick="switchCat('food',this)">&#127822; Food</button>
+    <button class="cat-btn" onclick="switchCat('numbers',this)">&#128290; Numbers</button>
+  </div>
+
+  <button class="start-btn" id="startBtn" onclick="startCam()">&#128247; เปิดกล้อง AR เพื่อเริ่มเล่น</button>
+
+  <div class="stage" id="stage" style="display:none;">
+    <video id="vid" autoplay playsinline muted></video>
+    <canvas id="ov"></canvas>
+    <div class="ar-badge">AR LIVE — ชูนิ้ว 1, 2, หรือ 3</div>
+    <div class="scan-line"></div>
+    <div class="cc tl"></div><div class="cc tr"></div>
+    <div class="cc bl"></div><div class="cc br"></div>
+    <div class="finger-display" id="fingerDisplay">
+      <div>
+        <div class="finger-num" id="fingerNum">—</div>
+        <div class="finger-label">นิ้ว</div>
+      </div>
+      <div class="finger-bar" id="fingerBar">
+        <div class="fbar" id="fb1" style="height:6px;"></div>
+        <div class="fbar" id="fb2" style="height:6px;"></div>
+        <div class="fbar" id="fb3" style="height:6px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="q-bar">
+    <div class="q-emoji" id="qEmoji">&#128049;</div>
+    <div class="q-info">
+      <div class="q-label">&#128270; คำถาม</div>
+      <div class="q-word" id="qWord">CAT</div>
+      <div class="q-hint" id="qHint">แปลว่าอะไร?</div>
+    </div>
+  </div>
+
+  <div class="hint-bar">&#9995; ชูนิ้ว <strong>1</strong>, <strong>2</strong>, หรือ <strong>3</strong> ให้กล้องเห็น แล้วค้างไว้สักครู่เพื่อยืนยัน!</div>
+
+  <div class="choices-row" id="choicesRow"></div>
+  <div class="feedback" id="feedback"></div>
+  <button class="next-btn" id="nextBtn" onclick="nextQ()">&#9654; คำถามถัดไป</button>
+
+  <div class="prog-row">
+    <span class="prog-lbl" id="progLbl">0 / 0</span>
+    <div class="prog-bg"><div class="prog-fg" id="progFg" style="width:0%"></div></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js" crossorigin="anonymous"></script>
+<script>
+const DB={
+  animals:[
+    {word:'CAT',thai:'แมว',emoji:'🐱'},
+    {word:'DOG',thai:'สุนัข',emoji:'🐶'},
+    {word:'BIRD',thai:'นก',emoji:'🐦'},
+    {word:'FISH',thai:'ปลา',emoji:'🐟'},
+    {word:'COW',thai:'วัว',emoji:'🐄'},
+    {word:'PIG',thai:'หมู',emoji:'🐷'},
+  ],
+  colors:[
+    {word:'RED',thai:'สีแดง',emoji:'🔴'},
+    {word:'BLUE',thai:'สีน้ำเงิน',emoji:'🔵'},
+    {word:'GREEN',thai:'สีเขียว',emoji:'🟢'},
+    {word:'YELLOW',thai:'สีเหลือง',emoji:'🟡'},
+    {word:'PINK',thai:'สีชมพู',emoji:'🩷'},
+    {word:'WHITE',thai:'สีขาว',emoji:'⚪'},
+  ],
+  food:[
+    {word:'APPLE',thai:'แอปเปิ้ล',emoji:'🍎'},
+    {word:'BANANA',thai:'กล้วย',emoji:'🍌'},
+    {word:'RICE',thai:'ข้าว',emoji:'🍚'},
+    {word:'MILK',thai:'นม',emoji:'🥛'},
+    {word:'EGG',thai:'ไข่',emoji:'🥚'},
+    {word:'CAKE',thai:'เค้ก',emoji:'🎂'},
+  ],
+  numbers:[
+    {word:'ONE',thai:'หนึ่ง',emoji:'1️⃣'},
+    {word:'TWO',thai:'สอง',emoji:'2️⃣'},
+    {word:'THREE',thai:'สาม',emoji:'3️⃣'},
+    {word:'FOUR',thai:'สี่',emoji:'4️⃣'},
+    {word:'FIVE',thai:'ห้า',emoji:'5️⃣'},
+    {word:'SIX',thai:'หก',emoji:'6️⃣'},
+  ],
+};
+
+let cat='animals',score=0,queue=[],qIdx=0,answered=false,done=0;
+let currentFingers=0,holdFrames=0,HOLD_NEEDED=22,lastConfirmed=0;
+let choices=[];
+let handsReady=false;
+
+const vid=document.getElementById('vid');
+const ov=document.getElementById('ov');
+const octx=ov.getContext('2d');
+
+function switchCat(c,btn){
+  cat=c;
+  document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  resetGame();
+}
+
+function resetGame(){
+  queue=[...DB[cat]].sort(()=>Math.random()-.5);
+  qIdx=0;done=0;answered=false;holdFrames=0;currentFingers=0;
+  document.getElementById('feedback').textContent='';
+  document.getElementById('nextBtn').classList.remove('show');
+  updateProg();
+  renderQ();
+}
+
+function renderQ(){
+  if(qIdx>=queue.length){
+    document.getElementById('feedback').innerHTML='<span class="fb-ok">🎉 เก่งมาก! หมดทุกคำแล้ว!</span>';
+    document.getElementById('qWord').textContent='';
+    document.getElementById('qEmoji').textContent='🎉';
+    document.getElementById('choicesRow').innerHTML='';
+    return;
+  }
+  answered=false;holdFrames=0;
+  document.getElementById('nextBtn').classList.remove('show');
+  document.getElementById('feedback').textContent='';
+  const q=queue[qIdx];
+  document.getElementById('qEmoji').innerHTML=q.emoji;
+  document.getElementById('qWord').textContent=q.word;
+
+  const allThai=DB[cat].map(x=>x.thai);
+  const wrong=allThai.filter(t=>t!==q.thai).sort(()=>Math.random()-.5).slice(0,2);
+  choices=[q.thai,...wrong].sort(()=>Math.random()-.5);
+
+  const fingers=['☝️','✌️','🤟'];
+  const row=document.getElementById('choicesRow');
+  row.innerHTML=choices.map((c,i)=>`
+    <div class="choice-t" id="ch${i+1}">
+      <span class="choice-num">${i+1}</span>
+      <span class="choice-finger">${fingers[i]}</span>
+      <span class="choice-text">${c}</span>
+    </div>
+  `).join('');
+}
+
+function updateProg(){
+  const total=queue.length;
+  const pct=total>0?Math.round((done/total)*100):0;
+  document.getElementById('progFg').style.width=pct+'%';
+  document.getElementById('progLbl').textContent=done+' / '+total;
+}
+
+async function startCam(){
+  document.getElementById('startBtn').style.display='none';
+  document.getElementById('stage').style.display='block';
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:400},height:{ideal:190}},audio:false});
+    vid.srcObject=stream;
+    await new Promise(r=>vid.onloadedmetadata=r);
+    vid.play();
+    ov.width=vid.videoWidth||400;
+    ov.height=vid.videoHeight||190;
+    initHands();
+  }catch(e){
+    fallbackMode();
+  }
+}
+
+function initHands(){
+  if(typeof Hands==='undefined'){fallbackMode();return;}
+  const hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${f}`});
+  hands.setOptions({maxNumHands:1,modelComplexity:0,minDetectionConfidence:0.55,minTrackingConfidence:0.5});
+  hands.onResults(onResults);
+  handsReady=true;
+  (async function loop(){
+    if(vid.readyState>=2) await hands.send({image:vid});
+    requestAnimationFrame(loop);
+  })();
+}
+
+function countFingers(lm){
+  let count=0;
+  const tips=[8,12,16,20];
+  const mids=[6,10,14,18];
+  for(let i=0;i<4;i++){
+    if(lm[tips[i]].y < lm[mids[i]].y) count++;
+  }
+  if(lm[4].x > lm[3].x) count++;
+  return Math.min(count,5);
+}
+
+function onResults(res){
+  octx.clearRect(0,0,ov.width,ov.height);
+  if(!res.multiHandLandmarks||res.multiHandLandmarks.length===0){
+    currentFingers=0;holdFrames=0;
+    updateFingerUI(0,0);
+    highlightChoice(0);
+    return;
+  }
+  const lm=res.multiHandLandmarks[0];
+  const raw=countFingers(lm);
+  const n=raw>=1&&raw<=3?raw:0;
+
+  drawHandOnCanvas(lm,n);
+
+  if(n===currentFingers&&n>0){
+    holdFrames++;
+  } else {
+    currentFingers=n;
+    holdFrames=n>0?1:0;
+  }
+
+  const pct=n>0?Math.min(holdFrames/HOLD_NEEDED,1):0;
+  updateFingerUI(n,pct);
+  highlightChoice(n);
+  drawProgressArc(lm,pct,n);
+
+  if(!answered && n>0 && holdFrames>=HOLD_NEEDED){
+    const now=Date.now();
+    if(now-lastConfirmed>1200){
+      lastConfirmed=now;
+      resolveAnswer(n);
+    }
+  }
+}
+
+function drawHandOnCanvas(lm,n){
+  const W=ov.width,H=ov.height;
+  const pairs=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+  octx.save();
+  octx.strokeStyle=n>0?'#4F46E5':'#888';
+  octx.lineWidth=2;
+  pairs.forEach(([a,b])=>{
+    octx.beginPath();
+    octx.moveTo((1-lm[a].x)*W,lm[a].y*H);
+    octx.lineTo((1-lm[b].x)*W,lm[b].y*H);
+    octx.stroke();
+  });
+  lm.forEach((p,i)=>{
+    const isTip=[4,8,12,16,20].includes(i);
+    octx.beginPath();
+    octx.arc((1-p.x)*W,p.y*H,isTip?5:3,0,Math.PI*2);
+    octx.fillStyle=isTip?(n>0?'#7C3AED':'#aaa'):'#fff';
+    octx.fill();
+  });
+  octx.restore();
+}
+
+function drawProgressArc(lm,pct,n){
+  if(n===0||pct===0) return;
+  const W=ov.width,H=ov.height;
+  const cx=(1-lm[9].x)*W;
+  const cy=lm[9].y*H;
+  const r=28;
+  const start=-Math.PI/2;
+  const end=start+(Math.PI*2*pct);
+  octx.save();
+  octx.beginPath();
+  octx.arc(cx,cy,r,start,end);
+  octx.strokeStyle=pct>=1?'#22C55E':'#F59E0B';
+  octx.lineWidth=4;
+  octx.lineCap='round';
+  octx.stroke();
+  if(pct>=1){
+    octx.font='bold 14px Nunito,sans-serif';
+    octx.fillStyle='#22C55E';
+    octx.textAlign='center';
+    octx.textBaseline='middle';
+    octx.fillText('✓',cx,cy);
+  }
+  octx.restore();
+}
+
+function updateFingerUI(n,pct){
+  document.getElementById('fingerNum').textContent=n>0?n:'—';
+  const heights=[6,6,6];
+  if(n>=1) heights[0]=Math.round(6+pct*22);
+  if(n>=2) heights[1]=Math.round(6+pct*22);
+  if(n>=3) heights[2]=Math.round(6+pct*22);
+  for(let i=1;i<=3;i++){
+    const b=document.getElementById('fb'+i);
+    b.style.height=heights[i-1]+'px';
+    b.style.background=pct>=1?'#22C55E':(n>=i?'#4F46E5':'#444');
+  }
+}
+
+function highlightChoice(n){
+  for(let i=1;i<=3;i++){
+    const el=document.getElementById('ch'+i);
+    if(!el) continue;
+    el.classList.remove('highlight','counting');
+    if(i===n){
+      el.classList.add(holdFrames>5?'counting':'highlight');
+    }
+  }
+}
+
+function resolveAnswer(n){
+  if(answered||qIdx>=queue.length) return;
+  answered=true;holdFrames=0;
+  const selected=choices[n-1];
+  const correct=queue[qIdx].thai;
+  const el=document.getElementById('ch'+n);
+  if(selected===correct){
+    if(el) el.classList.add('correct-t');
+    document.getElementById('feedback').innerHTML='<span class="fb-ok">🎉 ถูกต้อง! ชูนิ้ว '+n+' — เก่งมาก!</span>';
+    score+=10;
+    document.getElementById('score').textContent=score;
+    done++;
+    speak(queue[qIdx].word);
+    updateProg();
+    setTimeout(()=>document.getElementById('nextBtn').classList.add('show'),600);
+  } else {
+    if(el) el.classList.add('wrong-t');
+    const correctIdx=choices.indexOf(correct)+1;
+    document.getElementById('feedback').innerHTML='<span class="fb-no">❌ ลองใหม่! คำตอบคือ ข้อ '+correctIdx+' — '+correct+'</span>';
+    setTimeout(()=>{
+      if(el) el.classList.remove('wrong-t');
+      answered=false;holdFrames=0;
+    },1000);
+  }
+}
+
+function nextQ(){
+  qIdx++;
+  for(let i=1;i<=3;i++){const e=document.getElementById('ch'+i);if(e)e.className='choice-t';}
+  document.getElementById('feedback').textContent='';
+  document.getElementById('nextBtn').classList.remove('show');
+  holdFrames=0;currentFingers=0;
+  renderQ();
+}
+
+function fallbackMode(){
+  document.getElementById('stage').style.display='none';
+  document.getElementById('feedback').innerHTML='<span style="color:#F59E0B;font-size:12px;">⚠️ ไม่พบกล้อง — กดปุ่ม 1, 2, 3 แทนได้เลย</span>';
+  const row=document.getElementById('choicesRow');
+  setTimeout(()=>{
+    document.querySelectorAll('.choice-t').forEach((el,i)=>{
+      el.style.cursor='pointer';
+      el.onclick=()=>{if(!answered)resolveAnswer(i+1);};
+    });
+  },300);
+  document.addEventListener('keydown',e=>{
+    if(['1','2','3'].includes(e.key)) resolveAnswer(parseInt(e.key));
+  });
+}
+
+function speak(w){
+  if('speechSynthesis' in window){
+    const u=new SpeechSynthesisUtterance(w);
+    u.lang='en-US';u.rate=0.8;speechSynthesis.speak(u);
+  }
+}
+
+resetGame();
+</script>
