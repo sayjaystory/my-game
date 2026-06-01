@@ -3,327 +3,382 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>AR Phonics A-Z</title>
+<title>AR Learning Portal</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
 
 <style>
-
 :root{
---purple:#4F46E5;
---green:#22C55E;
---orange:#F97316;
---blue:#3B82F6;
---white:#FFFFFF;
+    --purple:#4F46E5;
+    --green:#22C55E;
+    --orange:#F97316;
+    --blue:#3B82F6;
+    --white:#FFFFFF;
 }
 
 *{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Nunito',sans-serif;
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Nunito',sans-serif;
 }
 
 body{
-height:100vh;
-overflow:hidden;
-background:
-linear-gradient(135deg,
-#4F46E5 0%,
-#6D28D9 35%,
-#22C55E 100%);
-display:flex;
-justify-content:center;
-align-items:center;
-position:relative;
+    min-height:100vh;
+    background:linear-gradient(135deg,#4F46E5,#3B82F6);
+    overflow-x:hidden;
 }
 
-/* Floating Shapes */
-
-.shape{
-position:absolute;
-border-radius:50%;
-filter:blur(10px);
-animation:float 8s ease-in-out infinite;
+.bg-circle{
+    position:fixed;
+    border-radius:50%;
+    filter:blur(80px);
+    opacity:.25;
+    z-index:0;
 }
 
-.shape1{
-width:180px;
-height:180px;
-background:rgba(255,255,255,.15);
-top:5%;
-left:8%;
+.c1{
+    width:350px;
+    height:350px;
+    background:#22C55E;
+    top:-80px;
+    left:-80px;
 }
 
-.shape2{
-width:250px;
-height:250px;
-background:rgba(34,197,94,.20);
-bottom:10%;
-right:5%;
+.c2{
+    width:400px;
+    height:400px;
+    background:#F97316;
+    bottom:-150px;
+    right:-100px;
 }
 
-.shape3{
-width:120px;
-height:120px;
-background:rgba(249,115,22,.20);
-top:15%;
-right:20%;
+header{
+    position:sticky;
+    top:0;
+    z-index:100;
+    backdrop-filter:blur(18px);
+    background:rgba(255,255,255,.12);
+    border-bottom:1px solid rgba(255,255,255,.2);
 }
 
-@keyframes float{
-0%,100%{transform:translateY(0);}
-50%{transform:translateY(-25px);}
+.nav{
+    max-width:1400px;
+    margin:auto;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:18px 25px;
 }
-
-/* Portal Card */
-
-.portal{
-width:min(95%,520px);
-padding:35px;
-border-radius:35px;
-
-background:rgba(255,255,255,.15);
-backdrop-filter:blur(18px);
--webkit-backdrop-filter:blur(18px);
-
-border:2px solid rgba(255,255,255,.2);
-
-box-shadow:
-0 20px 60px rgba(0,0,0,.25);
-
-text-align:center;
-color:white;
-}
-
-/* Logo */
 
 .logo{
-font-size:90px;
-margin-bottom:10px;
-animation:bounce 2s infinite;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    color:white;
 }
 
-@keyframes bounce{
-0%,100%{transform:translateY(0);}
-50%{transform:translateY(-10px);}
+.logo-icon{
+    width:55px;
+    height:55px;
+    border-radius:16px;
+    background:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:28px;
 }
 
-h1{
-font-size:42px;
-margin-bottom:10px;
+.logo h1{
+    font-size:24px;
 }
 
-.subtitle{
-font-size:18px;
-opacity:.95;
-margin-bottom:25px;
+.hero{
+    position:relative;
+    z-index:1;
+    max-width:1400px;
+    margin:auto;
+    padding:50px 20px 30px;
+    text-align:center;
+    color:white;
 }
 
-/* Feature Cards */
-
-.features{
-display:grid;
-grid-template-columns:1fr 1fr;
-gap:12px;
-margin-bottom:25px;
+.hero h2{
+    font-size:48px;
+    margin-bottom:15px;
 }
 
-.feature{
-background:rgba(255,255,255,.12);
-border-radius:18px;
-padding:15px;
+.hero p{
+    font-size:20px;
+    opacity:.9;
 }
 
-.feature span{
-display:block;
-font-size:30px;
-margin-bottom:5px;
+.search-box{
+    margin:30px auto;
+    max-width:600px;
 }
 
-.feature p{
-font-size:14px;
+.search-box input{
+    width:100%;
+    padding:18px 25px;
+    border:none;
+    border-radius:18px;
+    font-size:18px;
+    outline:none;
 }
 
-/* Input */
-
-.input-group{
-margin-bottom:20px;
+.container{
+    position:relative;
+    z-index:1;
+    max-width:1400px;
+    margin:auto;
+    padding:10px 20px 50px;
 }
 
-input{
-width:100%;
-padding:16px;
-border:none;
-outline:none;
-border-radius:18px;
-font-size:20px;
-text-align:center;
-font-weight:900;
-color:#333;
+.section{
+    margin-bottom:40px;
 }
 
-/* Buttons */
-
-.start-btn{
-width:100%;
-padding:18px;
-
-background:var(--orange);
-color:white;
-
-border:none;
-border-radius:22px;
-
-font-size:24px;
-font-weight:900;
-
-cursor:pointer;
-
-transition:.3s;
-box-shadow:0 8px 20px rgba(249,115,22,.35);
+.section-title{
+    color:white;
+    font-size:30px;
+    margin-bottom:18px;
 }
 
-.start-btn:hover{
-transform:translateY(-3px);
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+    gap:20px;
 }
 
-.start-btn:active{
-transform:scale(.98);
+.card{
+    background:rgba(255,255,255,.15);
+    backdrop-filter:blur(20px);
+    border:1px solid rgba(255,255,255,.2);
+    border-radius:24px;
+    overflow:hidden;
+    transition:.3s;
+    cursor:pointer;
 }
 
-.secondary{
-margin-top:12px;
-
-background:white;
-color:var(--purple);
-
-box-shadow:none;
+.card:hover{
+    transform:translateY(-8px);
 }
 
-/* Footer */
-
-.footer{
-margin-top:20px;
-font-size:13px;
-opacity:.85;
+.card-image{
+    height:180px;
+    background:linear-gradient(135deg,#ffffff30,#ffffff10);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:70px;
 }
 
-/* Mobile */
-
-@media(max-width:600px){
-
-.logo{
-font-size:70px;
+.card-content{
+    padding:20px;
 }
 
-h1{
-font-size:30px;
+.card h3{
+    color:white;
+    font-size:22px;
+    margin-bottom:8px;
 }
 
-.features{
-grid-template-columns:1fr;
+.card p{
+    color:white;
+    opacity:.85;
+    font-size:15px;
+    min-height:45px;
+}
+
+.btn{
+    width:100%;
+    margin-top:15px;
+    padding:12px;
+    border:none;
+    border-radius:14px;
+    background:var(--orange);
+    color:white;
+    font-size:16px;
+    font-weight:800;
+    cursor:pointer;
+}
+
+footer{
+    text-align:center;
+    color:white;
+    padding:25px;
+    opacity:.85;
+}
+
+@media(max-width:768px){
+
+.hero h2{
+    font-size:34px;
+}
+
+.hero p{
+    font-size:16px;
+}
+
+.section-title{
+    font-size:24px;
 }
 
 }
-
 </style>
 </head>
-
 <body>
 
-<div class="shape shape1"></div>
-<div class="shape shape2"></div>
-<div class="shape shape3"></div>
+<div class="bg-circle c1"></div>
+<div class="bg-circle c2"></div>
 
-<div class="portal">
+<header>
+    <div class="nav">
+        <div class="logo">
+            <div class="logo-icon">🎓</div>
+            <div>
+                <h1>AR Learning Portal</h1>
+            </div>
+        </div>
+    </div>
+</header>
 
-<div class="logo">🎯</div>
+<section class="hero">
+    <h2>🌟 ศูนย์รวมสื่อการเรียนรู้ AR</h2>
+    <p>เลือกกิจกรรมที่ต้องการเรียนรู้ได้ทันที</p>
 
-<h1>AR PHONICS A-Z</h1>
+    <div class="search-box">
+        <input type="text"
+               id="searchInput"
+               placeholder="🔍 ค้นหาเกมหรือสื่อการเรียนรู้..."
+               onkeyup="searchCards()">
+    </div>
+</section>
 
-<div class="subtitle">
-เรียนรู้เสียง Phonics ผ่านเทคโนโลยี AR<br>
-เพียงใช้มือสัมผัสคำตอบบนหน้าจอ
+<div class="container">
+
+    <!-- ภาษาอังกฤษ -->
+    <div class="section">
+        <h2 class="section-title">🔤 ภาษาอังกฤษ</h2>
+
+        <div class="grid">
+
+            <div class="card searchable"
+                 data-name="AR Phonics A-Z"
+                 onclick="openLink('https://YOUR-LINK-1')">
+
+                <div class="card-image">🔠</div>
+
+                <div class="card-content">
+                    <h3>AR Phonics A-Z</h3>
+                    <p>เรียนรู้เสียงพยัญชนะภาษาอังกฤษด้วย AR</p>
+                    <button class="btn">เข้าใช้งาน</button>
+                </div>
+
+            </div>
+
+            <div class="card searchable"
+                 data-name="Animal AR"
+                 onclick="openLink('https://YOUR-LINK-2')">
+
+                <div class="card-image">🦁</div>
+
+                <div class="card-content">
+                    <h3>Animal AR</h3>
+                    <p>เรียนรู้สัตว์ภาษาอังกฤษแบบ 3 มิติ</p>
+                    <button class="btn">เข้าใช้งาน</button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ภาษาไทย -->
+    <div class="section">
+
+        <h2 class="section-title">📖 ภาษาไทย</h2>
+
+        <div class="grid">
+
+            <div class="card searchable"
+                 data-name="ก-ฮ AR"
+                 onclick="openLink('https://YOUR-LINK-3')">
+
+                <div class="card-image">📚</div>
+
+                <div class="card-content">
+                    <h3>ก-ฮ AR</h3>
+                    <p>เรียนรู้พยัญชนะไทยผ่าน AR</p>
+                    <button class="btn">เข้าใช้งาน</button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- คณิตศาสตร์ -->
+    <div class="section">
+
+        <h2 class="section-title">➕ คณิตศาสตร์</h2>
+
+        <div class="grid">
+
+            <div class="card searchable"
+                 data-name="Math AR"
+                 onclick="openLink('https://YOUR-LINK-4')">
+
+                <div class="card-image">➕</div>
+
+                <div class="card-content">
+                    <h3>Math AR</h3>
+                    <p>เกมฝึกบวกเลขแบบ AR</p>
+                    <button class="btn">เข้าใช้งาน</button>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
 </div>
 
-<div class="features">
-
-<div class="feature">
-<span>📷</span>
-<p>AR Hand Tracking</p>
-</div>
-
-<div class="feature">
-<span>🔊</span>
-<p>Phonics Sound</p>
-</div>
-
-<div class="feature">
-<span>⭐</span>
-<p>สะสมคะแนน</p>
-</div>
-
-<div class="feature">
-<span>⏰</span>
-<p>แข่งกับเวลา</p>
-</div>
-
-</div>
-
-<div class="input-group">
-<input
-type="text"
-id="playerName"
-placeholder="กรอกชื่อผู้เล่น">
-</div>
-
-<button class="start-btn" onclick="startGame()">
-🚀 เริ่มเล่นเกม
-</button>
-
-<button class="start-btn secondary">
-📖 วิธีเล่น
-</button>
-
-<div class="footer">
-Designed for Grade 1 Students<br>
-AR Phonics Learning Game
-</div>
-
-</div>
+<footer>
+    Designed & Developed by Nasioisan
+</footer>
 
 <script>
 
-function startGame(){
-
-const playerName =
-document.getElementById("playerName").value.trim();
-
-if(playerName===""){
-alert("กรุณากรอกชื่อผู้เล่น");
-return;
+function openLink(url){
+    window.open(url,'_blank');
 }
 
-/*
-เปลี่ยนไปหน้าเกมจริง
-window.location.href='game.html';
+function searchCards(){
 
-หรือ
+    const keyword =
+    document.getElementById('searchInput')
+    .value.toLowerCase();
 
-เปิด Overlay เริ่มเกม
-*/
+    const cards =
+    document.querySelectorAll('.searchable');
 
-localStorage.setItem(
-'playerName',
-playerName
-);
+    cards.forEach(card=>{
 
-alert(
-'ยินดีต้อนรับ ' + playerName
-);
+        const text =
+        card.dataset.name.toLowerCase();
+
+        card.style.display =
+        text.includes(keyword)
+        ? 'block'
+        : 'none';
+
+    });
 
 }
 
