@@ -531,7 +531,7 @@
          */
         function fetchData() {
             // ดึงค่า URL ของระบบที่ประมวลผลมาจาก Backend Code.gs และระบุ action พารามิเตอร์
-            const apiUrl = "<?= webAppUrl ?>?action=getGames";
+            const apiUrl = "https://script.google.com/macros/s/AKfycbzMgVeXLRbMN7_EcvCJjOEFVv1_0VNIl-HIHQ34g6fRC7F44fd38_c63Y2M4Mk06uR5/exec?action=getGames";
 
             fetch(apiUrl)
                 .then(response => {
