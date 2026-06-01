@@ -1,62 +1,65 @@
 /**
- * AR Learning Hub - Backend System (Updated with Specific Sheet ID)
+ * AR Learning Hub - Backend System (ใช้ระบบ Fetch API)
  * สำหรับดึงข้อมูลสื่อการเรียนรู้จาก Google Sheets
  */
 
-// ใส่ Google Sheet ID ที่ต้องการใช้งาน
+// Google Sheet ID ที่ใช้งาน
 const SPREADSHEET_ID = '1dm0lLIvTK3hwFg9ugCkGxB1DcReCvZOzeoXUMISCyiI';
 // ชื่อ Sheet ที่เก็บข้อมูล
 const SHEET_NAME = 'Games';
 
 /**
- * ฟังก์ชันหลักสำหรับการสร้าง Web App
- * @param {Object} e - Event Object
- * @returns {HtmlOutput} - หน้าเว็บ Index.html
+ * ฟังก์ชันหลักสำหรับการจัดการ Request (เปิดหน้าเว็บ หรือ รับส่งข้อมูล API)
+ * @param {Object} e - Event Object จาก Google Apps Script
+ * @returns {Object} - HtmlOutput หรือ TextOutput (JSON)
  */
 function doGet(e) {
-  // สร้าง HTML Output จากไฟล์ Index.html พร้อมตั้งค่ารองรับ Responsive
-  return HtmlService.createHtmlOutputFromFile('index')
+  // 1. หากมีการส่งพารามิเตอร์ ?action=getGames มา ให้ทำหน้าที่เป็น API Endpoint คืนค่า JSON
+  if (e.parameter && e.parameter.action === 'getGames') {
+    const data = getGamesData();
+    return ContentService.createTextOutput(JSON.stringify(data))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  // 2. กรณีการเรียกหน้าเว็บปกติ ให้ใช้ HtmlTemplate เพื่อส่ง Web App URL ไปยัง Frontend โดยอัตโนมัติ
+  const webAppUrl = ScriptApp.getService().getUrl();
+  const template = HtmlService.createTemplateFromFile('Index');
+  template.webAppUrl = webAppUrl; // ส่งตัวแปร URL ไปที่ไฟล์ HTML
+  
+  return template.evaluate()
     .setTitle('AR Learning Hub - โรงเรียนบ้านสุไหงโก-ลก')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 /**
- * ฟังก์ชันสำหรับอ่านข้อมูลจาก Google Sheet แบบ Real-Time ผ่าน ID
- * @returns {String} - ข้อมูล JSON ของเกมที่สถานะ Active
+ * ฟังก์ชันภายในสำหรับประมวลผลข้อมูลจาก Google Sheet
+ * @returns {Array} - รายการเกมที่มีสถานะ Active
  */
-function getGames() {
+function getGamesData() {
   try {
-    // เปิด Google Sheet ผ่าน ID ที่ระบุไว้
     const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const sheet = ss.getSheetByName(SHEET_NAME);
     
     if (!sheet) {
-      throw new Error('ไม่พบ Sheet ที่ชื่อ "' + SHEET_NAME + '" ใน Spreadsheet ID ที่ระบุ');
+      return [];
     }
     
-    // ดึงข้อมูลทั้งหมด รวมถึง Header
     const dataRange = sheet.getDataRange().getValues();
-    
-    // ตรวจสอบว่ามีข้อมูลหรือไม่ (ต้องมีมากกว่า 1 แถวคือ Header + Data)
     if (dataRange.length <= 1) {
-      return JSON.stringify([]);
+      return [];
     }
     
-    const headers = dataRange[0];
     const rows = dataRange.slice(1);
     const activeGames = [];
     
-    // ตำแหน่ง Column (Index เริ่มจาก 0)
-    // 0:ID, 1:Category, 2:Title, 3:Description, 4:Thumbnail, 5:URL, 6:Status
+    // คอลัมน์ Status อยู่ที่ Index 6
     const STATUS_COL_INDEX = 6;
     
-    // วนลูปเพื่อดึงเฉพาะข้อมูลที่ Active
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i];
       const status = row[STATUS_COL_INDEX] ? row[STATUS_COL_INDEX].toString().trim().toLowerCase() : '';
       
-      // กรองเฉพาะ Status = Active
       if (status === 'active') {
         activeGames.push({
           id: row[0],
@@ -69,12 +72,10 @@ function getGames() {
       }
     }
     
-    // คืนค่าเป็น JSON String
-    return JSON.stringify(activeGames);
+    return activeGames;
     
   } catch (error) {
-    // ส่งคืน Array ว่างพร้อม Log error หากเกิดข้อผิดพลาด
-    console.error('Error in getGames:', error.message);
-    return JSON.stringify([]);
+    console.error('Error in getGamesData:', error.message);
+    return [];
   }
 }
