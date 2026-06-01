@@ -1,388 +1,725 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Learning Hub - โรงเรียนบ้านสุไหงโก-ลก</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ==================================================
+           CSS VARIABLES & RESET
+           ================================================== */
+        :root {
+            --purple: #4F46E5;
+            --blue: #3B82F6;
+            --green: #22C55E;
+            --orange: #F97316;
+            --white: #FFFFFF;
+            
+            --glass-bg: rgba(255, 255, 255, 0.7);
+            --glass-card: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            --text-dark: #1F2937;
+            --text-gray: #4B5563;
+        }
 
-<title>AR Learning Portal</title>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
 
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+        body {
+            background-color: #F3F4F6;
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
 
-<style>
-:root{
-    --purple:#4F46E5;
-    --green:#22C55E;
-    --orange:#F97316;
-    --blue:#3B82F6;
-    --white:#FFFFFF;
-}
+        /* ==================================================
+           FLOATING BLUR CIRCLES (BACKGROUND ANIMATION)
+           ================================================== */
+        .bg-shapes {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.5;
+            animation: float 20s infinite alternate ease-in-out;
+        }
+        .shape-1 { width: 400px; height: 400px; background: var(--purple); top: -100px; left: -100px; }
+        .shape-2 { width: 500px; height: 500px; background: var(--blue); bottom: -100px; right: -100px; animation-delay: -5s; }
+        .shape-3 { width: 300px; height: 300px; background: var(--green); top: 40%; left: 30%; animation-delay: -10s; }
+        .shape-4 { width: 350px; height: 350px; background: var(--orange); top: 20%; right: 10%; animation-delay: -15s; }
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Nunito',sans-serif;
-}
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(50px, 30px) scale(1.1); }
+            100% { transform: translate(-30px, 50px) scale(0.9); }
+        }
 
-body{
-    min-height:100vh;
-    background:linear-gradient(135deg,#4F46E5,#3B82F6);
-    overflow-x:hidden;
-}
+        /* ==================================================
+           HEADER (STICKY & GLASS)
+           ================================================== */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 16px 24px;
+            box-shadow: var(--glass-shadow);
+        }
 
-.bg-circle{
-    position:fixed;
-    border-radius:50%;
-    filter:blur(80px);
-    opacity:.25;
-    z-index:0;
-}
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-.c1{
-    width:350px;
-    height:350px;
-    background:#22C55E;
-    top:-80px;
-    left:-80px;
-}
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-dark);
+        }
 
-.c2{
-    width:400px;
-    height:400px;
-    background:#F97316;
-    bottom:-150px;
-    right:-100px;
-}
+        .logo-icon {
+            font-size: 28px;
+            background: linear-gradient(135deg, var(--purple), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-header{
-    position:sticky;
-    top:0;
-    z-index:100;
-    backdrop-filter:blur(18px);
-    background:rgba(255,255,255,.12);
-    border-bottom:1px solid rgba(255,255,255,.2);
-}
+        .logo-text h1 { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; }
+        .logo-text p { font-size: 12px; color: var(--text-gray); font-weight: 600; }
 
-.nav{
-    max-width:1400px;
-    margin:auto;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:18px 25px;
-}
+        .btn-home {
+            background: var(--white);
+            border: 1px solid var(--glass-border);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            color: var(--blue);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+        }
 
-.logo{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    color:white;
-}
+        /* ==================================================
+           MAIN LAYOUT & HERO SECTION
+           ================================================== */
+        main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            width: 100%;
+        }
 
-.logo-icon{
-    width:55px;
-    height:55px;
-    border-radius:16px;
-    background:white;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:28px;
-}
+        .hero {
+            text-align: center;
+            margin-bottom: 40px;
+            background: var(--glass-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            padding: 48px 24px;
+            box-shadow: var(--glass-shadow);
+            animation: fadeIn 1s ease-out;
+        }
 
-.logo h1{
-    font-size:24px;
-}
+        .hero h2 {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--purple), var(--blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
 
-.hero{
-    position:relative;
-    z-index:1;
-    max-width:1400px;
-    margin:auto;
-    padding:50px 20px 30px;
-    text-align:center;
-    color:white;
-}
+        .hero h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-gray);
+            margin-bottom: 16px;
+        }
 
-.hero h2{
-    font-size:48px;
-    margin-bottom:15px;
-}
+        .hero p {
+            font-size: 16px;
+            color: var(--text-gray);
+            max-width: 600px;
+            margin: 0 auto;
+        }
 
-.hero p{
-    font-size:20px;
-    opacity:.9;
-}
+        /* ==================================================
+           CONTROLS (SEARCH & CATEGORIES)
+           ================================================== */
+        .controls {
+            margin-bottom: 40px;
+            animation: fadeIn 1.2s ease-out;
+        }
 
-.search-box{
-    margin:30px auto;
-    max-width:600px;
-}
+        .search-box {
+            width: 100%;
+            max-width: 600px;
+            margin: 0 auto 24px auto;
+            position: relative;
+        }
 
-.search-box input{
-    width:100%;
-    padding:18px 25px;
-    border:none;
-    border-radius:18px;
-    font-size:18px;
-    outline:none;
-}
+        .search-input {
+            width: 100%;
+            padding: 16px 24px 16px 48px;
+            border-radius: 100px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-card);
+            backdrop-filter: blur(10px);
+            font-size: 16px;
+            color: var(--text-dark);
+            outline: none;
+            box-shadow: var(--glass-shadow);
+            transition: all 0.3s ease;
+        }
 
-.container{
-    position:relative;
-    z-index:1;
-    max-width:1400px;
-    margin:auto;
-    padding:10px 20px 50px;
-}
+        .search-input:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            background: var(--white);
+        }
 
-.section{
-    margin-bottom:40px;
-}
+        .search-icon {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
+        }
 
-.section-title{
-    color:white;
-    font-size:30px;
-    margin-bottom:18px;
-}
+        .categories {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            scrollbar-width: none; /* Firefox */
+        }
+        .categories::-webkit-scrollbar { display: none; } /* Chrome */
 
-.grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-    gap:20px;
-}
+        .category-btn {
+            white-space: nowrap;
+            padding: 10px 20px;
+            border-radius: 100px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-card);
+            backdrop-filter: blur(10px);
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-gray);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-.card{
-    background:rgba(255,255,255,.15);
-    backdrop-filter:blur(20px);
-    border:1px solid rgba(255,255,255,.2);
-    border-radius:24px;
-    overflow:hidden;
-    transition:.3s;
-    cursor:pointer;
-}
+        .category-btn:hover {
+            background: var(--white);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+        }
 
-.card:hover{
-    transform:translateY(-8px);
-}
+        .category-btn.active {
+            background: var(--purple);
+            color: var(--white);
+            border-color: var(--purple);
+            box-shadow: 0 6px 15px rgba(79, 70, 229, 0.3);
+        }
 
-.card-image{
-    height:180px;
-    background:linear-gradient(135deg,#ffffff30,#ffffff10);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:70px;
-}
+        /* ==================================================
+           GAME CARDS GRID
+           ================================================== */
+        .grid-container {
+            display: grid;
+            gap: 24px;
+            /* Mobile Default: 1 Card */
+            grid-template-columns: 1fr;
+        }
 
-.card-content{
-    padding:20px;
-}
+        /* Tablet: 2 Cards */
+        @media (min-width: 768px) {
+            .grid-container { grid-template-columns: repeat(2, 1fr); }
+        }
 
-.card h3{
-    color:white;
-    font-size:22px;
-    margin-bottom:8px;
-}
+        /* Desktop: 4 Cards */
+        @media (min-width: 1024px) {
+            .grid-container { grid-template-columns: repeat(4, 1fr); }
+        }
 
-.card p{
-    color:white;
-    opacity:.85;
-    font-size:15px;
-    min-height:45px;
-}
+        .card {
+            background: var(--glass-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--glass-shadow);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: fadeIn 0.5s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
 
-.btn{
-    width:100%;
-    margin-top:15px;
-    padding:12px;
-    border:none;
-    border-radius:14px;
-    background:var(--orange);
-    color:white;
-    font-size:16px;
-    font-weight:800;
-    cursor:pointer;
-}
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.8);
+        }
 
-footer{
-    text-align:center;
-    color:white;
-    padding:25px;
-    opacity:.85;
-}
+        .card-thumb {
+            width: 100%;
+            height: 180px;
+            border-radius: 16px;
+            object-fit: cover;
+            margin-bottom: 16px;
+            background-color: #E5E7EB;
+        }
 
-@media(max-width:768px){
+        .card-badge {
+            align-self: flex-start;
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--blue);
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 12px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
 
-.hero h2{
-    font-size:34px;
-}
+        .card-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
 
-.hero p{
-    font-size:16px;
-}
+        .card-desc {
+            font-size: 14px;
+            color: var(--text-gray);
+            margin-bottom: 20px;
+            flex-grow: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
 
-.section-title{
-    font-size:24px;
-}
+        .card-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, var(--blue), var(--purple));
+            color: var(--white);
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
 
-}
-</style>
+        .card-btn:hover {
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+            filter: brightness(1.1);
+        }
+
+        /* ==================================================
+           STATES (LOADING & EMPTY)
+           ================================================== */
+        .state-container {
+            text-align: center;
+            padding: 60px 20px;
+            width: 100%;
+            grid-column: 1 / -1;
+            background: var(--glass-card);
+            backdrop-filter: blur(16px);
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(79, 70, 229, 0.2);
+            border-top-color: var(--purple);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px auto;
+        }
+
+        .state-text {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-gray);
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        /* ==================================================
+           FOOTER
+           ================================================== */
+        footer {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--glass-border);
+            padding: 24px;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-content p {
+            font-size: 14px;
+            color: var(--text-gray);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        
+        .footer-content .dev-credit {
+            font-size: 12px;
+            color: var(--purple);
+            font-weight: 800;
+        }
+
+        /* ==================================================
+           ANIMATIONS
+           ================================================== */
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(20px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+    </style>
 </head>
 <body>
 
-<div class="bg-circle c1"></div>
-<div class="bg-circle c2"></div>
-
-<header>
-    <div class="nav">
-        <div class="logo">
-            <div class="logo-icon">🎓</div>
-            <div>
-                <h1>AR Learning Portal</h1>
-            </div>
-        </div>
+    <div class="bg-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
     </div>
-</header>
 
-<section class="hero">
-    <h2>🌟 ศูนย์รวมสื่อการเรียนรู้ AR</h2>
-    <p>เลือกกิจกรรมที่ต้องการเรียนรู้ได้ทันที</p>
-
-    <div class="search-box">
-        <input type="text"
-               id="searchInput"
-               placeholder="🔍 ค้นหาเกมหรือสื่อการเรียนรู้..."
-               onkeyup="searchCards()">
-    </div>
-</section>
-
-<div class="container">
-
-    <!-- ภาษาอังกฤษ -->
-    <div class="section">
-        <h2 class="section-title">🔤 ภาษาอังกฤษ</h2>
-
-        <div class="grid">
-
-            <div class="card searchable"
-                 data-name="AR Phonics A-Z"
-                 onclick="openLink('https://YOUR-LINK-1')">
-
-                <div class="card-image">🔠</div>
-
-                <div class="card-content">
-                    <h3>AR Phonics A-Z</h3>
-                    <p>เรียนรู้เสียงพยัญชนะภาษาอังกฤษด้วย AR</p>
-                    <button class="btn">เข้าใช้งาน</button>
+    <header>
+        <div class="header-container">
+            <a href="#" class="logo-area" onclick="resetFilters()">
+                <div class="logo-icon">🌟</div>
+                <div class="logo-text">
+                    <h1>AR Learning Hub</h1>
+                    <p>โรงเรียนบ้านสุไหงโก-ลก</p>
                 </div>
-
-            </div>
-
-            <div class="card searchable"
-                 data-name="Animal AR"
-                 onclick="openLink('https://YOUR-LINK-2')">
-
-                <div class="card-image">🦁</div>
-
-                <div class="card-content">
-                    <h3>Animal AR</h3>
-                    <p>เรียนรู้สัตว์ภาษาอังกฤษแบบ 3 มิติ</p>
-                    <button class="btn">เข้าใช้งาน</button>
-                </div>
-
-            </div>
-
+            </a>
+            <a href="#" class="btn-home" onclick="resetFilters()">🏠 Home</a>
         </div>
-    </div>
+    </header>
 
-    <!-- ภาษาไทย -->
-    <div class="section">
+    <main>
+        <section class="hero">
+            <h2>🌟 AR Learning Hub</h2>
+            <h3>โรงเรียนบ้านสุไหงโก-ลก</h3>
+            <p>ศูนย์รวมสื่อการเรียนรู้เทคโนโลยีโลกเสมือนจริง (AR) และ Interactive Learning เพื่อยกระดับการจัดการเรียนรู้เชิงรุก (Active Learning)</p>
+        </section>
 
-        <h2 class="section-title">📖 ภาษาไทย</h2>
-
-        <div class="grid">
-
-            <div class="card searchable"
-                 data-name="ก-ฮ AR"
-                 onclick="openLink('https://YOUR-LINK-3')">
-
-                <div class="card-image">📚</div>
-
-                <div class="card-content">
-                    <h3>ก-ฮ AR</h3>
-                    <p>เรียนรู้พยัญชนะไทยผ่าน AR</p>
-                    <button class="btn">เข้าใช้งาน</button>
-                </div>
-
+        <section class="controls">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" class="search-input" placeholder="ค้นหาสื่อการเรียนรู้ (ชื่อ, รายละเอียด, หมวดหมู่)..." oninput="handleSearch()">
             </div>
-
-        </div>
-
-    </div>
-
-    <!-- คณิตศาสตร์ -->
-    <div class="section">
-
-        <h2 class="section-title">➕ คณิตศาสตร์</h2>
-
-        <div class="grid">
-
-            <div class="card searchable"
-                 data-name="Math AR"
-                 onclick="openLink('https://YOUR-LINK-4')">
-
-                <div class="card-image">➕</div>
-
-                <div class="card-content">
-                    <h3>Math AR</h3>
-                    <p>เกมฝึกบวกเลขแบบ AR</p>
-                    <button class="btn">เข้าใช้งาน</button>
+            <div class="categories" id="categoryContainer">
                 </div>
+        </section>
 
+        <section class="grid-container" id="gridContainer">
+            <div class="state-container">
+                <div class="spinner"></div>
+                <div class="state-text">กำลังโหลดข้อมูล...</div>
             </div>
+        </section>
+    </main>
 
+    <footer>
+        <div class="footer-content">
+            <p>AR Learning Hub | โรงเรียนบ้านสุไหงโก-ลก</p>
+            <p class="dev-credit">Designed & Developed by Nasioisan</p>
+            <p style="font-size: 11px; margin-top: 8px;">Powered by Google Apps Script</p>
         </div>
+    </footer>
 
-    </div>
+    <script>
+        /** * Data Storage 
+         */
+        let allGames = [];
+        let currentCategory = 'All';
 
-</div>
+        /**
+         * Category Icon Mapping System
+         */
+        const iconMap = {
+            'english': '🔤',
+            'thai': '📖',
+            'math': '➕',
+            'science': '🔬',
+            'islam': '🕌',
+            'coding': '💻',
+            'art': '🎨'
+        };
 
-<footer>
-    Designed & Developed by Nasioisan
-</footer>
+        // ฟังก์ชันดึง Emoji อัตโนมัติ หากไม่มีในระบบให้ใช้ Default
+        function getCategoryIcon(catName) {
+            const key = catName.toLowerCase().trim();
+            return iconMap[key] || '📚';
+        }
 
-<script>
+        /**
+         * Initialization - Load data on page load
+         */
+        window.onload = () => {
+            fetchData();
+        };
 
-function openLink(url){
-    window.open(url,'_blank');
-}
+        /**
+         * ดึงข้อมูลผ่าน google.script.run
+         */
+        function fetchData() {
+            // เรียกฟังก์ชัน getGames จาก Code.gs
+            google.script.run
+                .withSuccessHandler(onSuccess)
+                .withFailureHandler(onError)
+                .getGames();
+        }
 
-function searchCards(){
+        /**
+         * Success Callback
+         * @param {String} jsonString - ข้อมูลที่แปลงเป็น JSON String แล้ว
+         */
+        function onSuccess(jsonString) {
+            try {
+                allGames = JSON.parse(jsonString);
+                extractCategories();
+                renderGames(allGames);
+            } catch (e) {
+                console.error("JSON Parsing error:", e);
+                showErrorState();
+            }
+        }
 
-    const keyword =
-    document.getElementById('searchInput')
-    .value.toLowerCase();
+        /**
+         * Error Callback
+         */
+        function onError(error) {
+            console.error("Apps Script error:", error);
+            showErrorState();
+        }
 
-    const cards =
-    document.querySelectorAll('.searchable');
+        /**
+         * สกัดรายชื่อ Category ทั้งหมดแบบ Dynamic เพื่อสร้างปุ่ม Filter
+         */
+        function extractCategories() {
+            const catContainer = document.getElementById('categoryContainer');
+            catContainer.innerHTML = '';
 
-    cards.forEach(card=>{
+            // สร้างปุ่ม "ทั้งหมด" เป็นค่า Default
+            const btnAll = document.createElement('button');
+            btnAll.className = 'category-btn active';
+            btnAll.innerHTML = `🌐 ทั้งหมด`;
+            btnAll.onclick = () => filterByCategory('All', btnAll);
+            catContainer.appendChild(btnAll);
 
-        const text =
-        card.dataset.name.toLowerCase();
+            // ดึง Category ไม่ซ้ำกัน (Unique)
+            const uniqueCats = [...new Set(allGames.map(item => item.category.trim()))];
+            
+            uniqueCats.forEach(cat => {
+                if(cat) {
+                    const btn = document.createElement('button');
+                    btn.className = 'category-btn';
+                    btn.innerHTML = `${getCategoryIcon(cat)} ${cat}`;
+                    btn.onclick = () => filterByCategory(cat, btn);
+                    catContainer.appendChild(btn);
+                }
+            });
+        }
 
-        card.style.display =
-        text.includes(keyword)
-        ? 'block'
-        : 'none';
+        /**
+         * กรองข้อมูลตาม Category
+         */
+        function filterByCategory(category, btnElement) {
+            currentCategory = category;
+            
+            // จัดการคลาส Active ของปุ่ม
+            const btns = document.querySelectorAll('.category-btn');
+            btns.forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
 
-    });
+            applyFilters();
+        }
 
-}
+        /**
+         * กรองข้อมูลจากช่อง Search
+         */
+        function handleSearch() {
+            applyFilters();
+        }
 
-</script>
+        /**
+         * Reset การค้นหาและหมวดหมู่ กลับไปหน้าแรก
+         */
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            currentCategory = 'All';
+            const btns = document.querySelectorAll('.category-btn');
+            if(btns.length > 0) {
+                btns.forEach(b => b.classList.remove('active'));
+                btns[0].classList.add('active');
+            }
+            applyFilters();
+        }
 
+        /**
+         * ประมวลผล Filter รวม (Search + Category)
+         */
+        function applyFilters() {
+            const searchText = document.getElementById('searchInput').value.toLowerCase();
+            
+            const filtered = allGames.filter(game => {
+                // เช็ค Category
+                const matchCategory = (currentCategory === 'All') || (game.category.trim() === currentCategory);
+                
+                // เช็ค Search Text (ค้นหาจาก Title, Description, Category)
+                const matchSearch = game.title.toLowerCase().includes(searchText) || 
+                                    game.description.toLowerCase().includes(searchText) || 
+                                    game.category.toLowerCase().includes(searchText);
+                
+                return matchCategory && matchSearch;
+            });
+
+            renderGames(filtered);
+        }
+
+        /**
+         * Render ข้อมูลเกมในรูปแบบ Card Grid
+         * @param {Array} games - Array ของข้อมูลเกม
+         */
+        function renderGames(games) {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+
+            // Empty State
+            if (games.length === 0) {
+                container.innerHTML = `
+                    <div class="state-container">
+                        <div class="empty-icon">📭</div>
+                        <div class="state-text">ไม่พบสื่อการเรียนรู้ที่คุณค้นหา</div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Loop สร้าง Card (ใช้ delay เพื่อทำ Animation ทีละ Card)
+            games.forEach((game, index) => {
+                const icon = getCategoryIcon(game.category);
+                const delay = index * 0.1; // Staggered animation
+                
+                // จัดการกรณีไม่มีรูปภาพ
+                const fallbackImg = 'https://via.placeholder.com/400x300/E5E7EB/4B5563?text=No+Image';
+                const imgSrc = game.thumbnail ? game.thumbnail : fallbackImg;
+
+                const cardHTML = `
+                    <div class="card" style="animation-delay: ${delay}s">
+                        <img src="${imgSrc}" alt="${game.title}" class="card-thumb" onerror="this.src='${fallbackImg}'">
+                        <div class="card-badge">
+                            ${icon} ${game.category}
+                        </div>
+                        <h4 class="card-title">${game.title}</h4>
+                        <p class="card-desc">${game.description}</p>
+                        <button class="card-btn" onclick="openGame('${game.url}')">
+                            🚀 เข้าใช้งาน
+                        </button>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHTML);
+            });
+        }
+
+        /**
+         * ฟังก์ชันเปิด URL สื่อการเรียนรู้
+         */
+        function openGame(url) {
+            if (url && url !== '') {
+                window.open(url, '_blank');
+            } else {
+                alert('ไม่พบลิงก์สำหรับการเข้าใช้งานสื่อนี้');
+            }
+        }
+
+        /**
+         * แสดงสถานะ Error
+         */
+        function showErrorState() {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = `
+                <div class="state-container">
+                    <div class="empty-icon">⚠️</div>
+                    <div class="state-text" style="color: #EF4444;">เกิดข้อผิดพลาดในการโหลดข้อมูล<br>กรุณารีเฟรชหน้าเว็บอีกครั้ง</div>
+                </div>
+            `;
+        }
+    </script>
 </body>
 </html>
-```
