@@ -230,9 +230,9 @@
             gap: 12px;
             overflow-x: auto;
             padding-bottom: 12px;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none;
         }
-        .categories::-webkit-scrollbar { display: none; } /* Chrome */
+        .categories::-webkit-scrollbar { display: none; }
 
         .category-btn {
             white-space: nowrap;
@@ -274,12 +274,10 @@
             grid-template-columns: 1fr;
         }
 
-        /* Tablet: 2 Cards */
         @media (min-width: 768px) {
             .grid-container { grid-template-columns: repeat(2, 1fr); }
         }
 
-        /* Desktop: 4 Cards */
         @media (min-width: 1024px) {
             .grid-container { grid-template-columns: repeat(4, 1fr); }
         }
@@ -506,14 +504,9 @@
     </footer>
 
     <script>
-        /** * Data Storage 
-         */
         let allGames = [];
         let currentCategory = 'All';
 
-        /**
-         * Category Icon Mapping System
-         */
         const iconMap = {
             'english': '🔤',
             'thai': '📖',
@@ -524,68 +517,50 @@
             'art': '🎨'
         };
 
-        // ฟังก์ชันดึง Emoji อัตโนมัติ หากไม่มีในระบบให้ใช้ Default
         function getCategoryIcon(catName) {
             const key = catName.toLowerCase().trim();
             return iconMap[key] || '📚';
         }
 
-        /**
-         * Initialization - Load data on page load
-         */
         window.onload = () => {
             fetchData();
         };
 
         /**
-         * ดึงข้อมูลผ่าน google.script.run
+         * ดึงข้อมูลด้วย Fetch API แทนการใช้ google.script.run
          */
         function fetchData() {
-            // เรียกฟังก์ชัน getGames จาก Code.gs
-            google.script.run
-                .withSuccessHandler(onSuccess)
-                .withFailureHandler(onError)
-                .getGames();
+            // ดึงค่า URL ของระบบที่ประมวลผลมาจาก Backend Code.gs และระบุ action พารามิเตอร์
+            const apiUrl = "<?= webAppUrl ?>?action=getGames";
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('การเชื่อมต่อเครือข่ายล้มเหลว');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    allGames = data;
+                    extractCategories();
+                    renderGames(allGames);
+                })
+                .catch(error => {
+                    console.error("Fetch Error:", error);
+                    showErrorState();
+                });
         }
 
-        /**
-         * Success Callback
-         * @param {String} jsonString - ข้อมูลที่แปลงเป็น JSON String แล้ว
-         */
-        function onSuccess(jsonString) {
-            try {
-                allGames = JSON.parse(jsonString);
-                extractCategories();
-                renderGames(allGames);
-            } catch (e) {
-                console.error("JSON Parsing error:", e);
-                showErrorState();
-            }
-        }
-
-        /**
-         * Error Callback
-         */
-        function onError(error) {
-            console.error("Apps Script error:", error);
-            showErrorState();
-        }
-
-        /**
-         * สกัดรายชื่อ Category ทั้งหมดแบบ Dynamic เพื่อสร้างปุ่ม Filter
-         */
         function extractCategories() {
             const catContainer = document.getElementById('categoryContainer');
             catContainer.innerHTML = '';
 
-            // สร้างปุ่ม "ทั้งหมด" เป็นค่า Default
             const btnAll = document.createElement('button');
             btnAll.className = 'category-btn active';
             btnAll.innerHTML = `🌐 ทั้งหมด`;
             btnAll.onclick = () => filterByCategory('All', btnAll);
             catContainer.appendChild(btnAll);
 
-            // ดึง Category ไม่ซ้ำกัน (Unique)
             const uniqueCats = [...new Set(allGames.map(item => item.category.trim()))];
             
             uniqueCats.forEach(cat => {
@@ -599,30 +574,18 @@
             });
         }
 
-        /**
-         * กรองข้อมูลตาม Category
-         */
         function filterByCategory(category, btnElement) {
             currentCategory = category;
-            
-            // จัดการคลาส Active ของปุ่ม
             const btns = document.querySelectorAll('.category-btn');
             btns.forEach(b => b.classList.remove('active'));
             btnElement.classList.add('active');
-
             applyFilters();
         }
 
-        /**
-         * กรองข้อมูลจากช่อง Search
-         */
         function handleSearch() {
             applyFilters();
         }
 
-        /**
-         * Reset การค้นหาและหมวดหมู่ กลับไปหน้าแรก
-         */
         function resetFilters() {
             document.getElementById('searchInput').value = '';
             currentCategory = 'All';
@@ -634,17 +597,11 @@
             applyFilters();
         }
 
-        /**
-         * ประมวลผล Filter รวม (Search + Category)
-         */
         function applyFilters() {
             const searchText = document.getElementById('searchInput').value.toLowerCase();
             
             const filtered = allGames.filter(game => {
-                // เช็ค Category
                 const matchCategory = (currentCategory === 'All') || (game.category.trim() === currentCategory);
-                
-                // เช็ค Search Text (ค้นหาจาก Title, Description, Category)
                 const matchSearch = game.title.toLowerCase().includes(searchText) || 
                                     game.description.toLowerCase().includes(searchText) || 
                                     game.category.toLowerCase().includes(searchText);
@@ -655,15 +612,10 @@
             renderGames(filtered);
         }
 
-        /**
-         * Render ข้อมูลเกมในรูปแบบ Card Grid
-         * @param {Array} games - Array ของข้อมูลเกม
-         */
         function renderGames(games) {
             const container = document.getElementById('gridContainer');
             container.innerHTML = '';
 
-            // Empty State
             if (games.length === 0) {
                 container.innerHTML = `
                     <div class="state-container">
@@ -674,12 +626,10 @@
                 return;
             }
 
-            // Loop สร้าง Card (ใช้ delay เพื่อทำ Animation ทีละ Card)
             games.forEach((game, index) => {
                 const icon = getCategoryIcon(game.category);
-                const delay = index * 0.05; // Staggered animation ที่กระชับขึ้น
+                const delay = index * 0.05; 
                 
-                // จัดการกรณีไม่มีรูปภาพ Thumbnail
                 const fallbackImg = 'https://via.placeholder.com/400x300/E5E7EB/4B5563?text=No+Image';
                 const imgSrc = game.thumbnail ? game.thumbnail : fallbackImg;
 
@@ -700,9 +650,6 @@
             });
         }
 
-        /**
-         * ฟังก์ชันเปิด URL สื่อการเรียนรู้ในแท็บใหม่
-         */
         function openGame(url) {
             if (url && url !== '') {
                 window.open(url, '_blank');
@@ -711,15 +658,12 @@
             }
         }
 
-        /**
-         * แสดงสถานะ Error
-         */
         function showErrorState() {
             const container = document.getElementById('gridContainer');
             container.innerHTML = `
                 <div class="state-container">
                     <div class="empty-icon">⚠️</div>
-                    <div class="state-text" style="color: #EF4444;">เกิดข้อผิดพลาดในการโหลดข้อมูล<br>กรุณาตรวจสอบการตั้งค่าแชร์ไฟล์ Google Sheet หรือรีเฟรชหน้าเว็บอีกครั้ง</div>
+                    <div class="state-text" style="color: #EF4444;">เกิดข้อผิดพลาดในการโหลดข้อมูลผ่าน API<br>กรุณาตรวจสอบสิทธิ์การเข้าถึงไฟล์ Google Sheet หรือรีเฟรชหน้าจออีกครั้ง</div>
                 </div>
             `;
         }
