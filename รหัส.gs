@@ -1,8 +1,10 @@
 /**
- * AR Learning Hub - Backend System
+ * AR Learning Hub - Backend System (Updated with Specific Sheet ID)
  * สำหรับดึงข้อมูลสื่อการเรียนรู้จาก Google Sheets
  */
 
+// ใส่ Google Sheet ID ที่ต้องการใช้งาน
+const SPREADSHEET_ID = '1dm0lLIvTK3hwFg9ugCkGxB1DcReCvZOzeoXUMISCyiI';
 // ชื่อ Sheet ที่เก็บข้อมูล
 const SHEET_NAME = 'Games';
 
@@ -20,16 +22,17 @@ function doGet(e) {
 }
 
 /**
- * ฟังก์ชันสำหรับอ่านข้อมูลจาก Google Sheet แบบ Real-Time
+ * ฟังก์ชันสำหรับอ่านข้อมูลจาก Google Sheet แบบ Real-Time ผ่าน ID
  * @returns {String} - ข้อมูล JSON ของเกมที่สถานะ Active
  */
 function getGames() {
   try {
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    // เปิด Google Sheet ผ่าน ID ที่ระบุไว้
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     const sheet = ss.getSheetByName(SHEET_NAME);
     
     if (!sheet) {
-      throw new Error('ไม่พบ Sheet ที่ชื่อ "Games"');
+      throw new Error('ไม่พบ Sheet ที่ชื่อ "' + SHEET_NAME + '" ใน Spreadsheet ID ที่ระบุ');
     }
     
     // ดึงข้อมูลทั้งหมด รวมถึง Header
@@ -66,7 +69,7 @@ function getGames() {
       }
     }
     
-    // คืนค่าเป็น JSON String เพื่อรองรับข้อมูลจำนวนมากและป้องกันปัญหา Data Type
+    // คืนค่าเป็น JSON String
     return JSON.stringify(activeGames);
     
   } catch (error) {
