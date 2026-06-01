@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AR Phonics A-Z Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@900&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <style>
+        :root {
+            --purple: #4F46E5;
+            --green: #22C55E;
+            --orange: #F97316;
+            --blue: #3B82F6;
+            --red: #EF4444;
+            --white: #FFFFFF;
+            --overlay: rgba(0, 0, 0, 0.65);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 900;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #111;
+        }
+
+        /* Video and Canvas layer */
+        .video-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #camera-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror video */
+        }
+
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+        }
+
+        /* UI Overlays (Pointer-events none so clicks pass through to canvas in fallback mode) */
+        .ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        .badge {
+            position: absolute;
+            top: 20px;
+            background: var(--white);
+            padding: 10px 25px;
+            border-radius: 20px;
+            border: 5px solid;
+            text-align: center;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+
+        .score-badge {
+            left: 20px;
+            border-color: var(--orange);
+            color: var(--orange);
+        }
+
+        .time-badge {
+            right: 20px;
+            border-color: var(--blue);
+            color: var(--blue);
+        }
+
+        .badge-label { font-size: 18px; color: #555; text-transform: uppercase; }
+        .badge-value { font-size: 36px; line-height: 1; }
+
+        .time-warning {
+            border-color: var(--red) !important;
+            color: var(--red) !important;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+
+        .instruction-box {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--white);
+            border: 6px solid var(--green);
+            border-radius: 25px;
+            padding: 15px 40px;
+            font-size: 32px;
+            color: #333;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            white-space: nowrap;
+        }
+
+        /* Screens (Start / End) */
+        .screen-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--overlay);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: auto;
+        }
+
+        .card {
+            background: var(--white);
+            padding: 50px;
+            border-radius: 30px;
+            text-align: center;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .card h1 {
+            font-size: 48px;
+            color: var(--purple);
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        .card h2 {
+            font-size: 36px;
+            color: var(--red);
+            margin-bottom: 20px;
+        }
+
+        .card p { font-size: 24px; color: #555; margin-bottom: 10px; }
+        .card .final-score { font-size: 64px; color: var(--orange); margin-bottom: 30px; }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 24px;
+            border: 4px solid var(--blue);
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            outline: none;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        button {
+            background: var(--purple);
+            color: var(--white);
+            font-size: 32px;
+            padding: 15px 50px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 8px 15px rgba(79, 70, 229, 0.4);
+            transition: transform 0.1s;
+        }
+
+        button:active { transform: scale(0.95); }
+
+        .hidden { display: none !important; }
+
+        .message-toast {
+            position: absolute;
+            top: 150px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--red);
+            color: var(--white);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 24px;
+            z-index: 60;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="video-container">
+        <video id="camera-video" autoplay playsinline></video>
+        <canvas id="game-canvas"></canvas>
+    </div>
+
+    <div class="ui-layer" id="game-ui" style="display: none;">
+        <div class="badge score-badge">
+            <div class="badge-label">คะแนน</div>
+            <div class="badge-value" id="score-val">0</div>
+        </div>
+        <div class="badge time-badge" id="time-badge">
+            <div class="badge-label">เวลา</div>
+            <div class="badge-value" id="time-val">40</div>
+        </div>
+        <div class="instruction-box">เสียงแบบนี้ คือ พยัญชนะตัวไหนเอ่ย</div>
+    </div>
+
+    <div class="message-toast" id="message-toast">ไม่สามารถเปิดกล้องได้ (เปิดโหมดแตะหน้าจอ)</div>
+
+    <div class="screen-overlay" id="start-screen">
+        <div class="card">
+            <h1>AR PHONICS A-Z</h1>
+            <input type="text" id="player-name" placeholder="ชื่อผู้เล่น (Player Name)" autocomplete="off">
+            <button id="start-btn">START</button>
+        </div>
+    </div>
+
+    <div class="screen-overlay hidden" id="game-over-screen">
+        <div class="card">
+            <h2>หมดเวลา</h2>
+            <p>คะแนนรวมของ <span id="final-name" style="color:var(--purple);"></span></p>
+            <div class="final-score" id="final-score-val">0</div>
+            <button id="replay-btn">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script>
+        /* --- 1. DATA & VARIABLES --- */
+        const phonicsData = [
+            {letter:"A", sound:"/æ/"}, {letter:"B", sound:"/b/"}, {letter:"C", sound:"/k/"},
+            {letter:"D", sound:"/d/"}, {letter:"E", sound:"/e/"}, {letter:"F", sound:"/f/"},
+            {letter:"G", sound:"/g/"}, {letter:"H", sound:"/h/"}, {letter:"I", sound:"/ɪ/"},
+            {letter:"J", sound:"/dʒ/"}, {letter:"K", sound:"/k/"}, {letter:"L", sound:"/l/"},
+            {letter:"M", sound:"/m/"}, {letter:"N", sound:"/n/"}, {letter:"O", sound:"/ɒ/"},
+            {letter:"P", sound:"/p/"}, {letter:"Q", sound:"/kw/"}, {letter:"R", sound:"/r/"},
+            {letter:"S", sound:"/s/"}, {letter:"T", sound:"/t/"}, {letter:"U", sound:"/ʌ/"},
+            {letter:"V", sound:"/v/"}, {letter:"W", sound:"/w/"}, {letter:"X", sound:"/ks/"},
+            {letter:"Y", sound:"/j/"}, {letter:"Z", sound:"/z/"}
+        ];
+
+        let state = {
+            isPlaying: false,
+            score: 0,
+            timeLeft: 40,
+            playerName: "",
+            cooldownFrames: 0,
+            waitingNext: false,
+            choices: [],
+            questionSound: "",
+            particles: [],
+            latestLandmarks: null,
+            isFallback: false
+        };
+
+        let timerInterval = null;
+        let actionTimeout = null;
+
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const video = document.getElementById('camera-video');
+
+        // Layout Constants
+        let cw = window.innerWidth;
+        let ch = window.innerHeight;
+
+        // Resize handler
+        function resize() {
+            cw = window.innerWidth;
+            ch = window.innerHeight;
+            canvas.width = cw;
+            canvas.height = ch;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        /* --- 2. AUDIO & SPEECH --- */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTone(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            const now = audioCtx.currentTime;
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now); // C5
+                osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.1); // C6
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+                gain.gain.setValueAtTime(0.3, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            }
+        }
+
+        function speakPhonics(sound) {
+            window.speechSynthesis.cancel();
+            // Phrase optimized for speech engine readability based on user prompt
+            const utterance = new SpeechSynthesisUtterance(`Find the letter that makes the sound ${sound}`);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.8;
+            utterance.pitch = 1;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        /* --- 3. GAME LOGIC --- */
+        function startGame() {
+            const nameInput = document.getElementById('player-name').value.trim();
+            if(!nameInput) return alert("กรุณาใส่ชื่อผู้เล่น / Please enter your name");
+            
+            // Initialize AudioContext on user gesture
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            // Dummy speak to initialize mobile speech engines
+            let dummy = new SpeechSynthesisUtterance("");
+            window.speechSynthesis.speak(dummy);
+
+            state.playerName = nameInput;
+            state.score = 0;
+            state.timeLeft = 40;
+            state.isPlaying = true;
+            state.cooldownFrames = 0;
+            state.waitingNext = false;
+            state.particles = [];
+            
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('game-over-screen').classList.add('hidden');
+            document.getElementById('game-ui').style.display = 'block';
+            
+            updateUI();
+            generateQuestion();
+            
+            if(timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                if(!state.isPlaying) return;
+                state.timeLeft--;
+                updateUI();
+                if(state.timeLeft <= 0) endGame();
+            }, 1000);
+
+            // Ensure rendering loop runs
+            requestAnimationFrame(drawLoop);
+        }
+
+        function endGame() {
+            state.isPlaying = false;
+            clearInterval(timerInterval);
+            if(actionTimeout) clearTimeout(actionTimeout);
+            
+            document.getElementById('game-ui').style.display = 'none';
+            document.getElementById('game-over-screen').classList.remove('hidden');
+            document.getElementById('final-name').innerText = state.playerName;
+            document.getElementById('final-score-val').innerText = state.score;
+        }
+
+        function updateUI() {
+            document.getElementById('score-val').innerText = state.score;
+            document.getElementById('time-val').innerText = state.timeLeft;
+            const timeBadge = document.getElementById('time-badge');
+            if(state.timeLeft <= 10) timeBadge.classList.add('time-warning');
+            else timeBadge.classList.remove('time-warning');
+        }
+
+        function generateQuestion() {
+            state.waitingNext = false;
+            
+            // Generate Random Target & Choices
+            let shuffledData = [...phonicsData].sort(() => 0.5 - Math.random());
+            let target = shuffledData[0];
+            let wrongs = [shuffledData[1], shuffledData[2]];
+            
+            let choiceData = [
+                { text: target.letter, isCorrect: true },
+                { text: wrongs[0].letter, isCorrect: false },
+                { text: wrongs[1].letter, isCorrect: false }
+            ].sort(() => 0.5 - Math.random());
+
+            state.questionSound = target.sound;
+            
+            // Layout Coordinates
+            let radius = Math.min(cw, ch) * 0.12;
+            state.choices = [
+                { x: cw * 0.2, y: ch * 0.62, r: radius, text: choiceData[0].text, isCorrect: choiceData[0].isCorrect, status: 'normal' },
+                { x: cw * 0.5, y: ch * 0.62, r: radius, text: choiceData[1].text, isCorrect: choiceData[1].isCorrect, status: 'normal' },
+                { x: cw * 0.8, y: ch * 0.62, r: radius, text: choiceData[2].text, isCorrect: choiceData[2].isCorrect, status: 'normal' }
+            ];
+
+            speakPhonics(target.letter); // Speak the letter conceptually (as symbols are hard to pronounce perfectly)
+        }
+
+        function handleCollision(choice) {
+            if(state.cooldownFrames > 0 || state.waitingNext || choice.status !== 'normal') return;
+            state.cooldownFrames = 20;
+
+            if(choice.isCorrect) {
+                choice.status = 'correct';
+                state.score += 10;
+                updateUI();
+                playTone('correct');
+                state.waitingNext = true;
+                
+                // Add floating text
+                state.particles.push({ x: choice.x, y: choice.y - choice.r, alpha: 1, text: "+10 คะแนน" });
+                
+                if(actionTimeout) clearTimeout(actionTimeout);
+                actionTimeout = setTimeout(generateQuestion, 2000);
+            } else {
+                choice.status = 'wrong';
+                playTone('wrong');
+                if(actionTimeout) clearTimeout(actionTimeout);
+                actionTimeout = setTimeout(() => {
+                    if(!state.waitingNext) choice.status = 'normal';
+                }, 800);
+            }
+        }
+
+        /* --- 4. CANVAS DRAWING & RENDER LOOP --- */
+        function drawCircle(x, y, r, fill, stroke, strokeWidth, isDashed = false) {
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            if(fill) { ctx.fillStyle = fill; ctx.fill(); }
+            if(stroke) {
+                ctx.setLineDash(isDashed ? [15, 15] : []);
+                ctx.lineWidth = strokeWidth;
+                ctx.strokeStyle = stroke;
+                ctx.stroke();
+            }
+            ctx.setLineDash([]); // reset
+        }
+
+        function drawText(text, x, y, size, color, font="Nunito", weight="900") {
+            ctx.font = `${weight} ${size}px ${font}`;
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, x, y);
+        }
+
+        function drawLoop() {
+            if(!state.isPlaying) return;
+
+            ctx.clearRect(0, 0, cw, ch);
+
+            // Cooldown processing
+            if(state.cooldownFrames > 0) state.cooldownFrames--;
+
+            // Draw Question Area
+            let qx = cw * 0.5;
+            let qy = ch * 0.22;
+            let qr = Math.min(cw, ch) * 0.15;
+            drawCircle(qx, qy, qr, "rgba(255,255,255,0.9)", "#22C55E", 8, true);
+            drawText(state.questionSound, qx, qy, qr * 0.7, "#22C55E");
+
+            // Draw Choices
+            state.choices.forEach(c => {
+                let fill = "#FFFFFF";
+                let stroke = "#4F46E5"; // Default Purple outline
+                let textColor = "#333333";
+                let text = c.text;
+
+                if (c.status === 'correct') {
+                    fill = "#22C55E"; stroke = "#22C55E"; textColor = "#FFFFFF"; text = "✓";
+                } else if (c.status === 'wrong') {
+                    fill = "#EF4444"; stroke = "#EF4444"; textColor = "#FFFFFF"; text = "✗";
+                }
+
+                drawCircle(c.x, c.y, c.r, fill, stroke, 6);
+                drawText(text, c.x, c.y, c.r * 1.2, textColor);
+            });
+
+            // Draw Hand Skeleton & Handle Tracking Collisions
+            if(state.latestLandmarks) {
+                const connections = [
+                    [0,1], [1,2], [2,3], [3,4], [0,5], [5,6], [6,7], [7,8], 
+                    [5,9], [9,10], [10,11], [11,12], [9,13], [13,14], [14,15], 
+                    [15,16], [13,17], [17,18], [18,19], [19,20], [0,17]
+                ];
+                
+                state.latestLandmarks.forEach(hand => {
+                    // Coordinates need inversion (1 - x) because the video is mirrored via CSS, 
+                    // but we draw on unmirrored canvas, so we manually flip X for correct mapping.
+                    const getPt = (lm) => ({ x: (1 - lm.x) * cw, y: lm.y * ch });
+                    
+                    // Draw Connections
+                    ctx.strokeStyle = "#22C55E";
+                    ctx.lineWidth = 4;
+                    connections.forEach(pair => {
+                        let p1 = getPt(hand[pair[0]]);
+                        let p2 = getPt(hand[pair[1]]);
+                        ctx.beginPath();
+                        ctx.moveTo(p1.x, p1.y);
+                        ctx.lineTo(p2.x, p2.y);
+                        ctx.stroke();
+                    });
+
+                    // Draw Landmarks
+                    const fingertips = [4, 8, 12, 16, 20];
+                    hand.forEach((lm, idx) => {
+                        let pt = getPt(lm);
+                        let r = fingertips.includes(idx) ? 12 : 6;
+                        drawCircle(pt.x, pt.y, r, "#FFFFFF", "#22C55E", 3);
+                    });
+
+                    // Collision Detection Check (Index Tip & Palm Center)
+                    let indexTip = getPt(hand[8]);
+                    let palmPts = [0, 5, 9, 13, 17].map(i => getPt(hand[i]));
+                    let palmCenter = {
+                        x: palmPts.reduce((sum, p) => sum + p.x, 0) / 5,
+                        y: palmPts.reduce((sum, p) => sum + p.y, 0) / 5
+                    };
+
+                    state.choices.forEach(c => {
+                        let distIndex = Math.hypot(c.x - indexTip.x, c.y - indexTip.y);
+                        let distPalm = Math.hypot(c.x - palmCenter.x, c.y - palmCenter.y);
+                        if(distIndex < c.r || distPalm < c.r) {
+                            handleCollision(c);
+                        }
+                    });
+                });
+            }
+
+            // Draw Particles (Floating Score)
+            for(let i = state.particles.length - 1; i >= 0; i--) {
+                let p = state.particles[i];
+                ctx.globalAlpha = p.alpha;
+                drawText(p.text, p.x, p.y, 40, "#F97316");
+                p.y -= 2;
+                p.alpha -= 0.02;
+                if(p.alpha <= 0) state.particles.splice(i, 1);
+            }
+            ctx.globalAlpha = 1.0;
+
+            requestAnimationFrame(drawLoop);
+        }
+
+        /* --- 5. MEDIAPIPE SETUP & FALLBACK --- */
+        async function setupMediaPipe() {
+            try {
+                // Ensure camera permissions
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                video.srcObject = stream;
+
+                const hands = new Hands({
+                    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+                });
+
+                hands.setOptions({
+                    maxNumHands: 2,
+                    modelComplexity: 1,
+                    minDetectionConfidence: 0.6,
+                    minTrackingConfidence: 0.6
+                });
+
+                hands.onResults((results) => {
+                    if (results.multiHandLandmarks) {
+                        state.latestLandmarks = results.multiHandLandmarks;
+                    } else {
+                        state.latestLandmarks = null;
+                    }
+                });
+
+                const camera = new Camera(video, {
+                    onFrame: async () => { await hands.send({image: video}); },
+                    width: 640, height: 480
+                });
+                camera.start();
+
+            } catch (err) {
+                console.error("Camera error:", err);
+                state.isFallback = true;
+                const toast = document.getElementById('message-toast');
+                toast.style.display = 'block';
+                setTimeout(() => toast.style.display = 'none', 5000);
+            }
+        }
+
+        // Fallback Touch / Mouse Events
+        function handlePointer(e) {
+            if(!state.isPlaying) return;
+            // Prevent default zooming/scrolling
+            e.preventDefault();
+            
+            let rect = canvas.getBoundingClientRect();
+            let touchX = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+            let touchY = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+
+            state.choices.forEach(c => {
+                let dist = Math.hypot(c.x - touchX, c.y - touchY);
+                if(dist < c.r) handleCollision(c);
+            });
+        }
+
+        canvas.addEventListener('mousedown', handlePointer);
+        canvas.addEventListener('touchstart', handlePointer, {passive: false});
+
+        /* --- 6. INITIALIZATION --- */
+        document.getElementById('start-btn').addEventListener('click', startGame);
+        document.getElementById('replay-btn').addEventListener('click', startGame);
+        
+        // Boot up mediapipe
+        setupMediaPipe();
+
+    </script>
+</body>
+</html>
