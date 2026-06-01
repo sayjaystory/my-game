@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>AR Punch Quiz ภาษาอังกฤษ ป.1</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;background:#000;font-family:'Nunito',sans-serif;overflow:hidden;}
+
+.shell{position:relative;width:100vw;height:100vw;max-height:100vh;max-width:calc(100vh);margin:auto;background:#0a0a1a;overflow:hidden;}
+@media(orientation:landscape){
+  .shell{width:100vh;height:56.25vw;max-width:100vw;max-height:100vh;}
+}
+
+video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
+canvas#gc{position:absolute;inset:0;width:100%;height:100%;}
+
+.hud-score{position:absolute;top:3%;left:3%;background:#fff;border:3px solid #F97316;border-radius:16px;padding:5px 16px;text-align:center;z-index:10;}
+.hud-score-label{font-size:12px;font-weight:900;color:#F97316;}
+.hud-score-val{font-size:26px;font-weight:900;color:#F97316;line-height:1.1;}
+
+.hud-timer{position:absolute;top:3%;right:3%;background:#fff;border:3px solid #3B82F6;border-radius:16px;padding:5px 18px;text-align:center;z-index:10;}
+.hud-timer-label{font-size:12px;font-weight:900;color:#3B82F6;}
+.hud-timer-val{font-size:34px;font-weight:900;color:#2563EB;line-height:1.1;}
+
+.hud-bottom{position:absolute;bottom:3%;left:3%;right:3%;z-index:10;}
+.instruction-box{background:rgba(255,255,255,.95);border:3px solid #22C55E;border-radius:18px;padding:10px 16px;display:flex;align-items:center;gap:12px;}
+.instr-icon{font-size:30px;flex-shrink:0;}
+.instr-sub{font-size:11px;font-weight:900;color:#22C55E;letter-spacing:.5px;}
+.instr-main{font-size:16px;font-weight:900;color:#1a1a1a;line-height:1.25;}
+
+.start-overlay{position:absolute;inset:0;background:rgba(0,0,0,.88);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:30;padding:20px;}
+.start-title{font-size:28px;font-weight:900;color:#fff;text-align:center;line-height:1.3;}
+.start-sub{font-size:15px;color:#ccc;text-align:center;}
+.start-btn{padding:15px 36px;background:#4F46E5;color:#fff;border:none;border-radius:18px;font-size:20px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;margin-top:4px;}
+.cat-grid{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.cat-s{padding:9px 18px;border-radius:999px;font-size:14px;font-weight:900;cursor:pointer;border:2.5px solid rgba(255,255,255,.3);font-family:'Nunito',sans-serif;background:rgba(255,255,255,.12);color:#fff;}
+.cat-s.on{background:#4F46E5;border-color:#4F46E5;}
+
+.result-overlay{position:absolute;inset:0;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:30;}
+.result-overlay.show{display:flex;}
+.result-title{font-size:36px;font-weight:900;color:#fff;}
+.result-score{font-size:72px;font-weight:900;color:#FCD34D;}
+.result-btn{padding:14px 32px;background:#22C55E;color:#fff;border:none;border-radius:16px;font-size:19px;font-weight:900;cursor:pointer;font-family:'Nunito',sans-serif;}
+</style>
+</head>
+<body>
+<div class="shell" id="shell">
+  <video id="vid" autoplay playsinline muted></video>
+  <canvas id="gc"></canvas>
+
+  <div class="hud-score">
+    <div class="hud-score-label">คะแนน</div>
+    <div class="hud-score-val" id="scoreVal">0</div>
+  </div>
+  <div class="hud-timer">
+    <div class="hud-timer-label">เวลา</div>
+    <div class="hud-timer-val" id="timerVal">40</div>
+  </div>
+
+  <div class="hud-bottom">
+    <div class="instruction-box">
+      <div class="instr-icon">🐶</div>
+      <div>
+        <div class="instr-sub" id="instrSub">เอามือไปชนวงกลม!</div>
+        <div class="instr-main" id="instrMain">เลือกคำแปลที่ถูกต้อง</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="start-overlay" id="startOverlay">
+    <div class="start-title">🎮 AR Punch Quiz<br>ภาษาอังกฤษ ป.1</div>
+    <div class="start-sub">เลือกหมวดคำศัพท์ที่ต้องการเรียน</div>
+    <div class="cat-grid">
+      <button class="cat-s on" onclick="selCat('animals',this)">🐾 Animals</button>
+      <button class="cat-s" onclick="selCat('colors',this)">🎨 Colors</button>
+      <button class="cat-s" onclick="selCat('food',this)">🍎 Food</button>
+      <button class="cat-s" onclick="selCat('numbers',this)">🔢 Numbers</button>
+    </div>
+    <button class="start-btn" onclick="startGame()">📷 เปิดกล้องเริ่มเล่น!</button>
+  </div>
+
+  <div class="result-overlay" id="resultOverlay">
+    <div class="result-title">🎉 จบเกม!</div>
+    <div style="color:#fff;font-size:20px;font-weight:800;">คะแนนของคุณ</div>
+    <div class="result-score" id="finalScore">0</div>
+    <button class="result-btn" onclick="restartGame()">🔄 เล่นใหม่</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js" crossorigin="anonymous"></script>
+<script>
+const DB={
+  animals:[
+    {word:'CAT',thai:'แมว',emoji:'🐱'},
+    {word:'DOG',thai:'สุนัข',emoji:'🐶'},
+    {word:'BIRD',thai:'นก',emoji:'🐦'},
+    {word:'FISH',thai:'ปลา',emoji:'🐟'},
+    {word:'COW',thai:'วัว',emoji:'🐄'},
+    {word:'PIG',thai:'หมู',emoji:'🐷'},
+    {word:'RABBIT',thai:'กระต่าย',emoji:'🐰'},
+    {word:'DUCK',thai:'เป็ด',emoji:'🦆'},
+  ],
+  colors:[
+    {word:'RED',thai:'สีแดง',emoji:'🔴'},
+    {word:'BLUE',thai:'สีน้ำเงิน',emoji:'🔵'},
+    {word:'GREEN',thai:'สีเขียว',emoji:'🟢'},
+    {word:'YELLOW',thai:'สีเหลือง',emoji:'🟡'},
+    {word:'PINK',thai:'สีชมพู',emoji:'🩷'},
+    {word:'WHITE',thai:'สีขาว',emoji:'⚪'},
+    {word:'BLACK',thai:'สีดำ',emoji:'⚫'},
+    {word:'ORANGE',thai:'สีส้ม',emoji:'🟠'},
+  ],
+  food:[
+    {word:'APPLE',thai:'แอปเปิ้ล',emoji:'🍎'},
+    {word:'BANANA',thai:'กล้วย',emoji:'🍌'},
+    {word:'RICE',thai:'ข้าว',emoji:'🍚'},
+    {word:'MILK',thai:'นม',emoji:'🥛'},
+    {word:'EGG',thai:'ไข่',emoji:'🥚'},
+    {word:'CAKE',thai:'เค้ก',emoji:'🎂'},
+    {word:'BREAD',thai:'ขนมปัง',emoji:'🍞'},
+    {word:'WATER',thai:'น้ำ',emoji:'💧'},
+  ],
+  numbers:[
+    {word:'ONE',thai:'หนึ่ง',emoji:'1️⃣'},
+    {word:'TWO',thai:'สอง',emoji:'2️⃣'},
+    {word:'THREE',thai:'สาม',emoji:'3️⃣'},
+    {word:'FOUR',thai:'สี่',emoji:'4️⃣'},
+    {word:'FIVE',thai:'ห้า',emoji:'5️⃣'},
+    {word:'SIX',thai:'หก',emoji:'6️⃣'},
+    {word:'SEVEN',thai:'เจ็ด',emoji:'7️⃣'},
+    {word:'EIGHT',thai:'แปด',emoji:'8️⃣'},
+  ],
+};
+
+const TOTAL_TIME=40;
+let cat='animals',score=0,timeLeft=TOTAL_TIME,timerID=null;
+let queue=[],qIdx=0,answered=false;
+let choices=[],qObj=null,bubbles=[];
+let handPts=[];
+let punchCD=0,gameRunning=false;
+
+const vid=document.getElementById('vid');
+const gc=document.getElementById('gc');
+const ctx=gc.getContext('2d');
+
+function sizeCanvas(){
+  const sh=document.getElementById('shell');
+  gc.width=sh.offsetWidth;
+  gc.height=sh.offsetHeight;
+}
+
+function selCat(c,btn){
+  cat=c;
+  document.querySelectorAll('.cat-s').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+async function startGame(){
+  document.getElementById('startOverlay').style.display='none';
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+    vid.srcObject=stream;
+    await new Promise(r=>vid.onloadedmetadata=r);
+    vid.play();
+    sizeCanvas();
+    window.addEventListener('resize',sizeCanvas);
+    initHands();
+    score=0;document.getElementById('scoreVal').textContent=0;
+    queue=[...DB[cat]].sort(()=>Math.random()-.5);
+    qIdx=0;
+    nextQuestion();
+    startTimer();
+    gameRunning=true;
+  }catch(e){
+    alert('ไม่สามารถเปิดกล้องได้ กรุณาอนุญาตการใช้กล้องก่อนครับ');
+    document.getElementById('startOverlay').style.display='flex';
+  }
+}
+
+function nextQuestion(){
+  if(qIdx>=queue.length) qIdx=0;
+  answered=false;
+  qObj=queue[qIdx];
+  const all=DB[cat].map(x=>x.thai);
+  const wrong=all.filter(t=>t!==qObj.thai).sort(()=>Math.random()-.5).slice(0,2);
+  choices=[qObj.thai,...wrong].sort(()=>Math.random()-.5);
+  document.getElementById('instrSub').textContent='คำถาม '+(qIdx+1)+' / '+queue.length;
+  document.getElementById('instrMain').textContent='เอามือชน! "'+qObj.word+'" แปลว่าอะไร?';
+  buildBubbles();
+}
+
+function buildBubbles(){
+  const W=gc.width,H=gc.height;
+  const pos=[
+    {x:0.20,y:0.60},
+    {x:0.50,y:0.60},
+    {x:0.80,y:0.60},
+  ];
+  const r=Math.min(W,H)*0.10;
+  bubbles=choices.map((c,i)=>({
+    x:pos[i].x*W, y:pos[i].y*H, r,
+    text:c, correct:c===qObj.thai,
+    state:'idle', stateTimer:0,
+  }));
+}
+
+function startTimer(){
+  timeLeft=TOTAL_TIME;
+  document.getElementById('timerVal').textContent=timeLeft;
+  if(timerID) clearInterval(timerID);
+  timerID=setInterval(()=>{
+    timeLeft--;
+    document.getElementById('timerVal').textContent=timeLeft;
+    if(timeLeft<=10) document.getElementById('timerVal').style.color='#EF4444';
+    if(timeLeft<=0){clearInterval(timerID);endGame();}
+  },1000);
+}
+
+function endGame(){
+  gameRunning=false;
+  document.getElementById('finalScore').textContent=score;
+  document.getElementById('resultOverlay').classList.add('show');
+}
+
+function restartGame(){
+  document.getElementById('resultOverlay').classList.remove('show');
+  document.getElementById('timerVal').style.color='#2563EB';
+  score=0;document.getElementById('scoreVal').textContent=0;
+  document.getElementById('startOverlay').style.display='flex';
+  if(timerID) clearInterval(timerID);
+  gameRunning=false;handPts=[];
+  ctx.clearRect(0,0,gc.width,gc.height);
+}
+
+function initHands(){
+  if(typeof Hands==='undefined') return;
+  const hands=new Hands({locateFile:f=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${f}`});
+  hands.setOptions({maxNumHands:2,modelComplexity:0,minDetectionConfidence:0.55,minTrackingConfidence:0.5});
+  hands.onResults(onResults);
+  (async function loop(){
+    if(vid.readyState>=2) await hands.send({image:vid});
+    requestAnimationFrame(loop);
+  })();
+}
+
+function onResults(res){
+  handPts=[];
+  if(res.multiHandLandmarks){
+    res.multiHandLandmarks.forEach(lm=>{
+      // collect fingertips + palm center
+      const tips=[4,8,12,16,20];
+      tips.forEach(i=>{
+        handPts.push({x:(1-lm[i].x)*gc.width, y:lm[i].y*gc.height, lm, isTip:true});
+      });
+      const palm=lm[0];
+      handPts.push({x:(1-palm.x)*gc.width, y:palm.y*gc.height, lm, isTip:false});
+    });
+  }
+  drawFrame();
+  if(gameRunning) checkCollision();
+}
+
+function drawFrame(){
+  ctx.clearRect(0,0,gc.width,gc.height);
+  drawQBubble();
+  bubbles.forEach(b=>{
+    if(b.stateTimer>0) b.stateTimer--;
+    if(b.stateTimer===0&&b.state!=='idle') b.state='idle';
+    drawChoiceBubble(b);
+  });
+  drawHands();
+}
+
+function drawQBubble(){
+  if(!qObj) return;
+  const W=gc.width,H=gc.height;
+  const cx=W*0.5, cy=H*0.22;
+  const r=Math.min(W,H)*0.13;
+
+  // dashed circle
+  ctx.save();
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.90)';ctx.fill();
+  ctx.setLineDash([10,7]);
+  ctx.strokeStyle='#22C55E';ctx.lineWidth=4;ctx.stroke();
+  ctx.setLineDash([]);
+
+  // emoji
+  const efs=Math.round(r*1.0);
+  ctx.font=`${efs}px serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(qObj.emoji,cx,cy-r*0.14);
+
+  // word
+  ctx.font=`900 ${Math.round(r*0.38)}px Nunito,sans-serif`;
+  ctx.fillStyle='#4F46E5';
+  ctx.fillText(qObj.word,cx,cy+r*0.52);
+  ctx.restore();
+}
+
+function drawChoiceBubble(b){
+  const {x,y,r,text,correct,state}=b;
+  ctx.save();
+  ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);
+
+  let fill='rgba(255,255,255,0.88)';
+  let stroke='rgba(255,255,255,0.5)';
+  let textColor='#1a1a1a';
+  if(state==='correct'){fill='rgba(34,197,94,0.92)';stroke='#16A34A';textColor='#fff';}
+  else if(state==='wrong'){fill='rgba(239,68,68,0.88)';stroke='#DC2626';textColor='#fff';}
+
+  ctx.fillStyle=fill;ctx.fill();
+  ctx.strokeStyle=stroke;ctx.lineWidth=3;ctx.stroke();
+
+  // text — wrap if long
+  const fs=Math.round(r*0.42);
+  ctx.font=`900 ${fs}px Nunito,sans-serif`;
+  ctx.fillStyle=textColor;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+
+  if(text.length<=4){
+    ctx.fillText(text,x,y);
+  } else if(text.length<=6){
+    ctx.fillText(text,x,y);
+  } else {
+    const half=Math.ceil(text.length/2);
+    ctx.font=`900 ${Math.round(r*0.36)}px Nunito,sans-serif`;
+    ctx.fillText(text.slice(0,half),x,y-r*0.22);
+    ctx.fillText(text.slice(half),x,y+r*0.26);
+  }
+
+  // state icon
+  if(state==='correct'){
+    ctx.font=`900 ${Math.round(r*0.55)}px serif`;
+    ctx.fillText('✓',x,y-r*0.6);
+  } else if(state==='wrong'){
+    ctx.font=`900 ${Math.round(r*0.5)}px serif`;
+    ctx.fillText('✗',x,y-r*0.6);
+  }
+  ctx.restore();
+}
+
+function drawHands(){
+  // unique lm sets
+  const seen=new Set();
+  handPts.forEach(hp=>{
+    if(seen.has(hp.lm)) return;
+    seen.add(hp.lm);
+    const lm=hp.lm;
+    const W=gc.width,H=gc.height;
+    const pairs=[[0,1],[1,2],[2,3],[3,4],[0,5],[5,6],[6,7],[7,8],[5,9],[9,10],[10,11],[11,12],[9,13],[13,14],[14,15],[15,16],[13,17],[17,18],[18,19],[19,20],[0,17]];
+    ctx.save();
+    ctx.strokeStyle='rgba(99,102,241,0.75)';ctx.lineWidth=2.5;
+    pairs.forEach(([a,b])=>{
+      ctx.beginPath();
+      ctx.moveTo((1-lm[a].x)*W,lm[a].y*H);
+      ctx.lineTo((1-lm[b].x)*W,lm[b].y*H);
+      ctx.stroke();
+    });
+    [4,8,12,16,20].forEach(i=>{
+      ctx.beginPath();
+      ctx.arc((1-lm[i].x)*W,lm[i].y*H,9,0,Math.PI*2);
+      ctx.fillStyle='rgba(124,58,237,0.85)';ctx.fill();
+    });
+    ctx.restore();
+  });
+}
+
+function checkCollision(){
+  if(answered||!qObj) return;
+  if(punchCD>0){punchCD--;return;}
+  handPts.forEach(hp=>{
+    bubbles.forEach(b=>{
+      if(b.state==='correct') return;
+      const dx=hp.x-b.x,dy=hp.y-b.y;
+      if(Math.sqrt(dx*dx+dy*dy)<b.r+14){
+        punchCD=20;
+        if(b.correct){
+          b.state='correct';b.stateTimer=40;
+          answered=true;
+          score+=10;document.getElementById('scoreVal').textContent=score;
+          speak(qObj.word);
+          document.getElementById('instrMain').textContent='🎉 ถูกต้อง! +10 คะแนน!';
+          setTimeout(()=>{qIdx++;nextQuestion();},850);
+        } else {
+          b.state='wrong';b.stateTimer=18;
+          document.getElementById('instrMain').textContent='❌ ผิด! ลองใหม่นะ!';
+        }
+      }
+    });
+  });
+}
+
+function speak(w){
+  if('speechSynthesis' in window){
+    const u=new SpeechSynthesisUtterance(w);
+    u.lang='en-US';u.rate=0.78;speechSynthesis.speak(u);
+  }
+}
+
+window.addEventListener('load',sizeCanvas);
+</script>
+</body>
+</html>
