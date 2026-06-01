@@ -15,7 +15,7 @@ const SHEET_NAME = 'Games';
  */
 function doGet(e) {
   // สร้าง HTML Output จากไฟล์ Index.html พร้อมตั้งค่ารองรับ Responsive
-  return HtmlService.createHtmlOutputFromFile('Index')
+  return HtmlService.createHtmlOutputFromFile('index')
     .setTitle('AR Learning Hub - โรงเรียนบ้านสุไหงโก-ลก')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
